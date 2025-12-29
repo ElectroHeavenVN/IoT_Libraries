@@ -104,7 +104,7 @@ void ZaloBotClient::_cancelPolling()
 void ZaloBotClient::_httpGetAsync(const String &endpoint)
 {
 	if (WiFi.status() != WL_CONNECTED)
-        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
+		return;
     String url = "https://bot-api.zapps.me/bot" + _botToken + "/" + endpoint;
     BC_DEBUG_LN("Async GET: " + url);
     _asyncHttpClient.begin(_wifiClient, url);
@@ -181,6 +181,8 @@ ZaloBotESPResponse ZaloBotClient::_httpGetAsyncGetResponse()
 
 ZaloBotESPResponse ZaloBotClient::GetPollingUpdates()
 {
+	if (WiFi.status() != WL_CONNECTED)
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     if (!_poolingInProgress)
     {
         _httpGetAsync("getUpdates");
