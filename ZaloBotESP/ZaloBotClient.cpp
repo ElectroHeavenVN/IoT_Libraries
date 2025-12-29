@@ -39,11 +39,14 @@ ZaloBotClient::ZaloBotClient(const String &botToken) : _botToken(botToken)
 
 ZaloBotESPResponse ZaloBotClient::_httpGet(const String &endpoint)
 {
+	if (WiFi.status() != WL_CONNECTED)
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     _cancelPolling();
     String url = "https://bot-api.zapps.me/bot" + _botToken + "/" + endpoint;
     String json = "";
     BC_DEBUG_LN("GET " + url);
-    _httpClient.begin(_wifiClient, url);
+    if (!_httpClient.begin(_wifiClient, url))
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::HttpConnectionFailed);
     int httpCode = _httpClient.GET();
     if (httpCode > 0)
         json = _httpClient.getString();
@@ -62,6 +65,8 @@ ZaloBotESPResponse ZaloBotClient::_httpGet(const String &endpoint)
 
 ZaloBotESPResponse ZaloBotClient::_httpPost(const String &endpoint, const char *keys[], const char *values[], int count)
 {
+	if (WiFi.status() != WL_CONNECTED)
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     _cancelPolling();
     String body = _buildFormBody(keys, values, count);
     String url = "https://bot-api.zapps.me/bot" + _botToken + "/" + endpoint;
@@ -98,6 +103,8 @@ void ZaloBotClient::_cancelPolling()
 
 void ZaloBotClient::_httpGetAsync(const String &endpoint)
 {
+	if (WiFi.status() != WL_CONNECTED)
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     String url = "https://bot-api.zapps.me/bot" + _botToken + "/" + endpoint;
     BC_DEBUG_LN("Async GET: " + url);
     _asyncHttpClient.begin(_wifiClient, url);
@@ -144,6 +151,8 @@ String ZaloBotClient::_buildFormBody(const char *keys[], const char *values[], i
 
 ZaloBotESPResponse ZaloBotClient::_httpGetAsyncGetResponse()
 {
+	if (WiFi.status() != WL_CONNECTED)
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     int httpCode = _asyncHttpClient.processResponseAsync();
     if (httpCode < 0)
     {
