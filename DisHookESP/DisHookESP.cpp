@@ -153,14 +153,9 @@ void DisHookESP::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    _httpClient.setUserAgent("DragonBoyESP_ESP8266");
     _wifiClient.setBufferSizes(4096, 2048);
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);
-    _httpClient.setUserAgent("DragonBoyESP_ESP32");
 #endif
     _httpClient.setTimeout(5000);
-    // _httpClient.addHeader("Content-Type", "application/json");
-    const char *keys[] = {"Transfer-Encoding"};
-    _httpClient.collectHeaders(keys, 1);
 }
