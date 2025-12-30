@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-enum class DisHookESPResponseCode : int
+enum class ESPDiscordBotResponseCode : int
 {
     // HTTP client errors
     HttpConnectionFailed = -1,
@@ -36,91 +36,91 @@ enum class DisHookESPResponseCode : int
     UnknownError = 1000
 };
 
-struct DisHookESPResponse
+struct ESPDiscordBotResponse
 {
-    DisHookESPResponseCode errorCode;
+    ESPDiscordBotResponseCode errorCode;
     String errorMessage = "Success";
     JsonDocument responseData;
 
-    DisHookESPResponse(JsonDocument doc) : errorCode(DisHookESPResponseCode::Success), responseData(doc) {}
-    DisHookESPResponse(DisHookESPResponseCode code, JsonDocument doc) : errorCode(code), responseData(doc) { setErrorMessageFromCode(code); }
-    DisHookESPResponse(DisHookESPResponseCode code, String message) : errorCode(code), errorMessage(message) {}
-    DisHookESPResponse(DisHookESPResponseCode code, String message, JsonDocument doc) : errorCode(code), errorMessage(message), responseData(doc) {}
-    DisHookESPResponse(DisHookESPResponseCode code) : errorCode(code) { setErrorMessageFromCode(code); }
+    ESPDiscordBotResponse(JsonDocument doc) : errorCode(ESPDiscordBotResponseCode::Success), responseData(doc) {}
+    ESPDiscordBotResponse(ESPDiscordBotResponseCode code, JsonDocument doc) : errorCode(code), responseData(doc) { setErrorMessageFromCode(code); }
+    ESPDiscordBotResponse(ESPDiscordBotResponseCode code, String message) : errorCode(code), errorMessage(message) {}
+    ESPDiscordBotResponse(ESPDiscordBotResponseCode code, String message, JsonDocument doc) : errorCode(code), errorMessage(message), responseData(doc) {}
+    ESPDiscordBotResponse(ESPDiscordBotResponseCode code) : errorCode(code) { setErrorMessageFromCode(code); }
 
-    void setErrorMessageFromCode(DisHookESPResponseCode code)
+    void setErrorMessageFromCode(ESPDiscordBotResponseCode code)
     {
         switch (code)
         {
-        case DisHookESPResponseCode::HttpConnectionFailed:
+        case ESPDiscordBotResponseCode::HttpConnectionFailed:
             errorMessage = "Connection failed";
             break;
-        case DisHookESPResponseCode::HttpSendHeaderFailed:
+        case ESPDiscordBotResponseCode::HttpSendHeaderFailed:
             errorMessage = "Send header failed";
             break;
-        case DisHookESPResponseCode::HttpSendPayloadFailed:
+        case ESPDiscordBotResponseCode::HttpSendPayloadFailed:
             errorMessage = "Send payload failed";
             break;
-        case DisHookESPResponseCode::HttpNotConnected:
+        case ESPDiscordBotResponseCode::HttpNotConnected:
             errorMessage = "Not connected";
             break;
-        case DisHookESPResponseCode::HttpConnectionLost:
+        case ESPDiscordBotResponseCode::HttpConnectionLost:
             errorMessage = "Connection lost";
             break;
-        case DisHookESPResponseCode::HttpNoRespStream:
+        case ESPDiscordBotResponseCode::HttpNoRespStream:
             errorMessage = "No response stream";
             break;
-        case DisHookESPResponseCode::HttpNotAHttpServer:
+        case ESPDiscordBotResponseCode::HttpNotAHttpServer:
             errorMessage = "Not a HTTP server";
             break;
-        case DisHookESPResponseCode::HttpNotEnoughRam:
+        case ESPDiscordBotResponseCode::HttpNotEnoughRam:
             errorMessage = "Not enough RAM";
             break;
-        case DisHookESPResponseCode::HttpTransferEncodingNotSupported:
+        case ESPDiscordBotResponseCode::HttpTransferEncodingNotSupported:
             errorMessage = "Transfer-Encoding not supported";
             break;
-        case DisHookESPResponseCode::HttpStreamWriteFailed:
+        case ESPDiscordBotResponseCode::HttpStreamWriteFailed:
             errorMessage = "Stream write failed";
             break;
-        case DisHookESPResponseCode::HttpReadTimeout:
+        case ESPDiscordBotResponseCode::HttpReadTimeout:
             errorMessage = "Read timeout";
             break;
 
-        case DisHookESPResponseCode::Success:
+        case ESPDiscordBotResponseCode::Success:
             errorMessage = "Success";
             break;
-        case DisHookESPResponseCode::InvalidParameter:
+        case ESPDiscordBotResponseCode::InvalidParameter:
             errorMessage = "Invalid parameter";
             break;
-        case DisHookESPResponseCode::WifiNotConnected:
+        case ESPDiscordBotResponseCode::WifiNotConnected:
             errorMessage = "WiFi not connected";
             break;
-        case DisHookESPResponseCode::InvalidResponse:
+        case ESPDiscordBotResponseCode::InvalidResponse:
             errorMessage = "Invalid response from server";
             break;
-        case DisHookESPResponseCode::JsonDeserializationFailed:
+        case ESPDiscordBotResponseCode::JsonDeserializationFailed:
             errorMessage = "JSON deserialization failed";
             break;
 
-        case DisHookESPResponseCode::NoContent:
+        case ESPDiscordBotResponseCode::NoContent:
             errorMessage = "No Content";
             break;
-        case DisHookESPResponseCode::BadRequest:
+        case ESPDiscordBotResponseCode::BadRequest:
             errorMessage = "Bad request";
             break;
-        case DisHookESPResponseCode::Unauthorized:
+        case ESPDiscordBotResponseCode::Unauthorized:
             errorMessage = "Unauthorized";
             break;
-        case DisHookESPResponseCode::Forbidden:
+        case ESPDiscordBotResponseCode::Forbidden:
             errorMessage = "Forbidden";
             break;
-        case DisHookESPResponseCode::NotFound:
+        case ESPDiscordBotResponseCode::NotFound:
             errorMessage = "Not found";
             break;
-        case DisHookESPResponseCode::RequestTimeout:
+        case ESPDiscordBotResponseCode::RequestTimeout:
             errorMessage = "Request timeout";
             break;
-        case DisHookESPResponseCode::RateLimitExceeded:
+        case ESPDiscordBotResponseCode::RateLimitExceeded:
             errorMessage = "Rate limit exceeded";
             break;
 

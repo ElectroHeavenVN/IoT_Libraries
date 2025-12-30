@@ -39,7 +39,7 @@ static_assert(!std::is_copy_constructible_v<HTTPClientMod>, "");
 static_assert(std::is_move_constructible_v<HTTPClientMod>, "");
 static_assert(std::is_move_assignable_v<HTTPClientMod>, "");
 
-static const char defaultUserAgentPstr[] PROGMEM = "ESP8266HTTPClientMod";
+static const char defaultUserAgentPstr[] PROGMEM = "ESP8266HTTPClient";
 const String HTTPClientMod::defaultUserAgent = defaultUserAgentPstr;
 
 static int StreamReportToHttpClientReport (Stream::Report streamSendError)

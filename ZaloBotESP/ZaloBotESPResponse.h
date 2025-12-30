@@ -20,14 +20,15 @@ enum class ZaloBotESPResponseCode : int
     HttpAsyncCancelled = -12,
 
     Success = 0,
+    InvalidParameter,
     WifiNotConnected,
-    EmptyResponse,
     InvalidResponse,
     JsonDeserializationFailed,
     PollingStarted,
     PollingInProgress,
 
     // HTTP status codes
+    NoContent = 204,
     BadRequest = 400,
     Unauthorized = 401,
     Forbidden = 403,
@@ -35,7 +36,7 @@ enum class ZaloBotESPResponseCode : int
     RequestTimeout = 408,
     RateLimitExceeded = 429,
 
-    UnknownError
+    UnknownError = 1000
 };
 
 struct ZaloBotESPResponse
@@ -90,6 +91,7 @@ struct ZaloBotESPResponse
         case ZaloBotESPResponseCode::HttpAsyncCancelled:
             errorMessage = "Async cancelled";
             break;
+
         case ZaloBotESPResponseCode::Success:
         {
             if (!responseData.isNull())
@@ -105,14 +107,14 @@ struct ZaloBotESPResponse
             errorMessage = "Success";
             break;
         }
+        case ZaloBotESPResponseCode::InvalidParameter:
+            errorMessage = "Invalid parameter";
+            break;
         case ZaloBotESPResponseCode::WifiNotConnected:
             errorMessage = "WiFi not connected";
             break;
         case ZaloBotESPResponseCode::InvalidResponse:
             errorMessage = "Invalid response from server";
-            break;
-        case ZaloBotESPResponseCode::EmptyResponse:
-            errorMessage = "Empty response from server";
             break;
         case ZaloBotESPResponseCode::JsonDeserializationFailed:
             errorMessage = "JSON deserialization failed";
@@ -122,6 +124,10 @@ struct ZaloBotESPResponse
             break;
         case ZaloBotESPResponseCode::PollingInProgress:
             errorMessage = "Polling in progress";
+            break;
+
+        case ZaloBotESPResponseCode::NoContent:
+            errorMessage = "No Content";
             break;
         case ZaloBotESPResponseCode::BadRequest:
             errorMessage = "Bad request";
@@ -141,6 +147,7 @@ struct ZaloBotESPResponse
         case ZaloBotESPResponseCode::RateLimitExceeded:
             errorMessage = "Rate limit exceeded";
             break;
+
         default:
             errorMessage = "Unknown error";
             break;

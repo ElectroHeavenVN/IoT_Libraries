@@ -51,11 +51,12 @@ ZaloBotESPResponse ZaloBotClient::_httpGet(const String &endpoint)
     if (httpCode > 0)
         json = _httpClient.getString();
     else
+    {   
         BC_DEBUG("GET error code: %d\n", httpCode);
+        return ZaloBotESPResponse(static_cast<ZaloBotESPResponseCode>(httpCode));
+    }
     _httpClient.end();
     BC_DEBUG_LN("Response: " + json);
-    if (json.length() <= 0)
-        return ZaloBotESPResponse(ZaloBotESPResponseCode::EmptyResponse);
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, json);
     if (error)
@@ -79,11 +80,12 @@ ZaloBotESPResponse ZaloBotClient::_httpPost(const String &endpoint, const char *
     if (httpCode > 0)
         json = _httpClient.getString();
     else
+    {
         BC_DEBUG("POST error code: %d\n", httpCode);
+        return ZaloBotESPResponse(static_cast<ZaloBotESPResponseCode>(httpCode));
+    }
     _httpClient.end();
     BC_DEBUG_LN("Response: " + json);
-    if (json.length() <= 0)
-        return ZaloBotESPResponse(ZaloBotESPResponseCode::EmptyResponse);
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, json);
     if (error)
@@ -114,6 +116,7 @@ void ZaloBotClient::_httpGetAsync(const String &endpoint)
 String ZaloBotClient::_buildFormBody(const char *keys[], const char *values[], int count)
 {
     String body = "";
+    char buf[4];
     for (int i = 0; i < count; ++i)
     {
         for (int j = 0; j < strlen(keys[i]); ++j)
@@ -123,7 +126,6 @@ String ZaloBotClient::_buildFormBody(const char *keys[], const char *values[], i
                 body += c;
             else
             {
-                char buf[4];
                 snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
                 body += buf;
             }
@@ -138,7 +140,6 @@ String ZaloBotClient::_buildFormBody(const char *keys[], const char *values[], i
                 body += "+";
             else
             {
-                char buf[4];
                 snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
                 body += buf;
             }
@@ -170,8 +171,6 @@ ZaloBotESPResponse ZaloBotClient::_httpGetAsyncGetResponse()
     }
     _asyncHttpClient.end();
     BC_DEBUG_LN("Async response: " + json);
-    if (json.length() <= 0)
-        return ZaloBotESPResponse(ZaloBotESPResponseCode::EmptyResponse);
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, json);
     if (error)
@@ -203,6 +202,10 @@ ZaloBotESPResponse ZaloBotClient::GetMe()
 
 ZaloBotESPResponse ZaloBotClient::SendPhoto(const String &threadID, const String &photoUrl, const String &caption)
 {
+    if (threadID.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
+    if (photoUrl.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "photoUrl is empty.");
     const char *keys[] = {"chat_id", "photo", "caption"};
     const char *values[] = {threadID.c_str(), photoUrl.c_str(), caption.c_str()};
     return _httpPost("sendPhoto", keys, values, 3);
@@ -210,6 +213,10 @@ ZaloBotESPResponse ZaloBotClient::SendPhoto(const String &threadID, const String
 
 ZaloBotESPResponse ZaloBotClient::SendSticker(const String &threadID, const String &stickerID)
 {
+    if (threadID.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
+    if (stickerID.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "stickerID is empty.");
     const char *keys[] = {"chat_id", "sticker"};
     const char *values[] = {threadID.c_str(), stickerID.c_str()};
     return _httpPost("sendSticker", keys, values, 2);
@@ -217,6 +224,10 @@ ZaloBotESPResponse ZaloBotClient::SendSticker(const String &threadID, const Stri
 
 ZaloBotESPResponse ZaloBotClient::SendChatAction(const String &threadID, const String &action)
 {
+    if (threadID.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
+    if (action.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "action is empty.");
     const char *keys[] = {"chat_id", "action"};
     const char *values[] = {threadID.c_str(), action.c_str()};
     return _httpPost("sendChatAction", keys, values, 2);
@@ -224,6 +235,10 @@ ZaloBotESPResponse ZaloBotClient::SendChatAction(const String &threadID, const S
 
 ZaloBotESPResponse ZaloBotClient::SendMsg(const String &threadID, const String &content)
 {
+    if (threadID.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
+    if (content.isEmpty())
+        return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "content is empty.");
     const char *keys[] = {"chat_id", "text"};
     const char *values[] = {threadID.c_str(), content.c_str()};
     return _httpPost("sendMessage", keys, values, 2);

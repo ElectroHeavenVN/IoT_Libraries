@@ -1,8 +1,7 @@
 #include "DisHookESP.hpp"
 #include <WiFiClientSecure.h>
-// #include <StreamUtils.h>
 
-const char DISCORD_COM_CA[] PROGMEM = R"(
+static const char DISCORD_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
 MIICCTCCAY6gAwIBAgINAgPlwGjvYxqccpBQUjAKBggqhkjOPQQDAzBHMQswCQYD
 VQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEUMBIG
@@ -31,6 +30,8 @@ HTTPClient DisHookESP::_httpClient;
 // Pass threadName to create a new thread with that name
 DisHookESPResponse DisHookESP::SendMessage(String url, DiscordWebhookMessageBuilder &builder, String threadName, vector<uint64_t> tagIDs)
 {
+    if (url.isEmpty())
+        return DisHookESPResponse(DisHookESPResponseCode::InvalidParameter, "Webhook URL is empty.");
     if (WiFi.status() != WL_CONNECTED)
         return DisHookESPResponse(DisHookESPResponseCode::WifiNotConnected);
     if (!url.endsWith("wait=true"))
@@ -46,9 +47,9 @@ DisHookESPResponse DisHookESP::SendMessage(String url, DiscordWebhookMessageBuil
     if (isComponentV2)
     {
         if (components.empty())
-            return DisHookESPResponse(DisHookESPResponseCode::InvalidBuilder, "Message marked as ComponentV2 but has no components.");
+            return DisHookESPResponse(DisHookESPResponseCode::InvalidParameter, "Message marked as ComponentV2 but has no components.");
         if (!embeds.empty() || builder.GetContent().has_value())
-            return DisHookESPResponse(DisHookESPResponseCode::InvalidBuilder, "Message marked as ComponentV2 can only contain components.");
+            return DisHookESPResponse(DisHookESPResponseCode::InvalidParameter, "Message marked as ComponentV2 can only contain components.");
         url += "&with_components=true";
     }
     uint64_t flags = 0;
@@ -95,6 +96,8 @@ DisHookESPResponse DisHookESP::SendMessage(String url, DiscordWebhookMessageBuil
 
 DisHookESPResponse DisHookESP::SendMessage(String url, String content, String username, String avatarUrl, String threadName, vector<uint64_t> tagIDs)
 {
+    if (url.isEmpty())
+        return DisHookESPResponse(DisHookESPResponseCode::InvalidParameter, "Webhook URL is empty.");
     if (WiFi.status() != WL_CONNECTED)
         return DisHookESPResponse(DisHookESPResponseCode::WifiNotConnected);
     JsonDocument doc;
@@ -129,10 +132,10 @@ DisHookESPResponse DisHookESP::_sendMessage(String url, JsonDocument doc)
     serializeJson(doc, jsonString);
     int httpResponseCode = _httpClient.POST(jsonString);
     JsonDocument responseDoc;
-    if (httpResponseCode <= 0)
+    if (httpResponseCode < 0)
     {
         _httpClient.end();
-        return DisHookESPResponse(DisHookESPResponseCode::InvalidResponse, HTTPClient::errorToString(httpResponseCode) + String(" (Error code: ") + String(httpResponseCode) + String(")"));
+        return DisHookESPResponse(static_cast<DisHookESPResponseCode>(httpResponseCode));
     }
     DeserializationError error = deserializeJson(responseDoc, _httpClient.getString());
     _httpClient.end();
@@ -141,11 +144,15 @@ DisHookESPResponse DisHookESP::_sendMessage(String url, JsonDocument doc)
     if (httpResponseCode == 400)
         return DisHookESPResponse(DisHookESPResponseCode::BadRequest, responseDoc);
     if (httpResponseCode == 401)
-        return DisHookESPResponse(DisHookESPResponseCode::InvalidWebhook, responseDoc);
+        return DisHookESPResponse(DisHookESPResponseCode::Unauthorized, responseDoc);
+    if (httpResponseCode == 403)
+        return DisHookESPResponse(DisHookESPResponseCode::Forbidden, responseDoc);
     if (httpResponseCode == 404)
-        return DisHookESPResponse(DisHookESPResponseCode::WebhookNotFound, responseDoc);
+        return DisHookESPResponse(DisHookESPResponseCode::NotFound, responseDoc);
+    if (httpResponseCode == 408)
+        return DisHookESPResponse(DisHookESPResponseCode::RequestTimeout, responseDoc);
     if (httpResponseCode == 429)
-        return DisHookESPResponse(DisHookESPResponseCode::RateLimited, responseDoc);
+        return DisHookESPResponse(DisHookESPResponseCode::RateLimitExceeded, responseDoc);
     return DisHookESPResponse(responseDoc);
 }
 

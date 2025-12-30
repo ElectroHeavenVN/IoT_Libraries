@@ -324,7 +324,7 @@ protected:
   String _uri;
   String _protocol;
   String _headers;
-  String _userAgent = "ESP32HTTPClientMod";
+  String _userAgent = "ESP32HTTPClient";
   String _base64Authorization;
   String _authorizationType = "Basic";
   String _acceptEncoding = "identity;q=1,chunked;q=0.1,*;q=0";
