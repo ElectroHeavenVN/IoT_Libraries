@@ -109,12 +109,11 @@ ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, Stri
         Stream& rawStream = _httpClient.getStream();
         StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
         Stream& response = _httpClient.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, response);
+        DeserializationError error = deserializeJson(responseDoc, response);
         _httpClient.end();
         if (error)
             return ESPDiscordBotResponse(ESPDiscordBotResponseCode::JsonDeserializationFailed);
-        return ESPDiscordBotResponse(doc);
+        return ESPDiscordBotResponse(responseDoc);
     }
     else if (httpResponseCode == 204)
     {
