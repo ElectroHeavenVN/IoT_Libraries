@@ -1,9 +1,6 @@
 #include "ESPDiscordBot.hpp"
 #include <StreamUtils.hpp>
 
-WiFiClientSecure ESPDiscordBot::_wifiClient;
-HTTPClient ESPDiscordBot::_httpClient;
-
 static const char DISCORD_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
 MIICCTCCAY6gAwIBAgINAgPlwGjvYxqccpBQUjAKBggqhkjOPQQDAzBHMQswCQYD
@@ -20,6 +17,9 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 -----END CERTIFICATE-----)";
 
 #define BASE_DISCORD_API_URL "https://discord.com/api/v10/"
+
+WiFiClientSecure ESPDiscordBot::_wifiClient;
+HTTPClient ESPDiscordBot::_httpClient;
 
 ESPDiscordBotResponse ESPDiscordBot::SendMessage(String token, String channelId, String content)
 {
@@ -102,9 +102,7 @@ ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, Stri
     if (httpResponseCode < 0)
     {
         _httpClient.end();
-        Serial.println("HTTP request failed with code: " + String(httpResponseCode));
         return ESPDiscordBotResponse(static_cast<ESPDiscordBotResponseCode>(httpResponseCode));
-
     }
     if (httpResponseCode == 200 || httpResponseCode == 201)
     {
@@ -147,7 +145,7 @@ void ESPDiscordBot::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    _wifiClient.setBufferSizes(4096, 2048);
+    _wifiClient.setBufferSizes(1024, 1024);
     _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/ESPDiscordBot, 1.0), ESP8266HTTPClient");
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);
