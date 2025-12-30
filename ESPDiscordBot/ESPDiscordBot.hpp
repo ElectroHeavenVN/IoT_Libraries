@@ -12,7 +12,7 @@
 #include <HTTPClient.h>
 #endif
 
-class DiscordBotClient
+class ESPDiscordBot
 {
 public:
     static void SetupClient();

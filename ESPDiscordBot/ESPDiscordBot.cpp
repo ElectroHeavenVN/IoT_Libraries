@@ -1,7 +1,7 @@
-#include "DiscordBotClient.hpp"
+#include "ESPDiscordBot.hpp"
 
-WiFiClientSecure DiscordBotClient::_wifiClient;
-HTTPClient DiscordBotClient::_httpClient;
+WiFiClientSecure ESPDiscordBot::_wifiClient;
+HTTPClient ESPDiscordBot::_httpClient;
 
 static const char DISCORD_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
@@ -20,7 +20,7 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 
 #define BASE_DISCORD_API_URL "https://discord.com/api/v10/"
 
-ESPDiscordBotResponse DiscordBotClient::SendMessage(String token, String channelId, String content)
+ESPDiscordBotResponse ESPDiscordBot::SendMessage(String token, String channelId, String content)
 {
     if (token.isEmpty())
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
@@ -40,7 +40,7 @@ ESPDiscordBotResponse DiscordBotClient::SendMessage(String token, String channel
     return _sendRequest(token, url, "POST", doc);
 }
 
-ESPDiscordBotResponse DiscordBotClient::AddReaction(String token, String channelId, String messageId, String emoji)
+ESPDiscordBotResponse ESPDiscordBot::AddReaction(String token, String channelId, String messageId, String emoji)
 {
     if (token.isEmpty())
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
@@ -64,7 +64,7 @@ ESPDiscordBotResponse DiscordBotClient::AddReaction(String token, String channel
     return _sendRequest(token, url, "PUT");
 }
 
-ESPDiscordBotResponse DiscordBotClient::GetMessages(String token, String channelId, String around, String before, String after, int limit)
+ESPDiscordBotResponse ESPDiscordBot::GetMessages(String token, String channelId, String around, String before, String after, int limit)
 {
     if (token.isEmpty())
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
@@ -85,7 +85,7 @@ ESPDiscordBotResponse DiscordBotClient::GetMessages(String token, String channel
     return _sendRequest(token, url, "GET");
 }
 
-ESPDiscordBotResponse DiscordBotClient::_sendRequest(String token, String url, String method, JsonDocument doc)
+ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, String method, JsonDocument doc)
 {
     if (!_httpClient.begin(_wifiClient, url))
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::HttpConnectionFailed);
@@ -146,7 +146,7 @@ ESPDiscordBotResponse DiscordBotClient::_sendRequest(String token, String url, S
     return ESPDiscordBotResponse(ESPDiscordBotResponseCode::UnknownError, responseDoc);
 }
 
-void DiscordBotClient::SetupClient()
+void ESPDiscordBot::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
@@ -159,7 +159,7 @@ _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Lib
     _httpClient.setTimeout(5000);
 }
 
-String DiscordBotClient::_urlEncode(const String& str) {
+String ESPDiscordBot::_urlEncode(const String& str) {
     String encodedString = "";
     char c;
     char buf[4];
