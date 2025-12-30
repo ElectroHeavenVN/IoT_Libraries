@@ -1,5 +1,5 @@
 #include "DisHookESP.hpp"
-#include <WiFiClientSecure.h>
+#include <StreamUtils.hpp>
 
 static const char DISCORD_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
@@ -128,6 +128,8 @@ DisHookESPResponse DisHookESP::_sendMessage(String url, JsonDocument doc)
     if (!_httpClient.begin(_wifiClient, url))
         return DisHookESPResponse(DisHookESPResponseCode::HttpConnectionFailed);
     _httpClient.addHeader("Content-Type", "application/json");
+    const char* keys[] = {"Transfer-Encoding"};
+    _httpClient.collectHeaders(keys, 1);
     String jsonString;
     serializeJson(doc, jsonString);
     int httpResponseCode = _httpClient.POST(jsonString);
@@ -137,7 +139,11 @@ DisHookESPResponse DisHookESP::_sendMessage(String url, JsonDocument doc)
         _httpClient.end();
         return DisHookESPResponse(static_cast<DisHookESPResponseCode>(httpResponseCode));
     }
-    DeserializationError error = deserializeJson(responseDoc, _httpClient.getString());
+    Stream& rawStream = _httpClient.getStream();
+    StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
+    Stream& response = _httpClient.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, response);
     _httpClient.end();
     if (error)
         return DisHookESPResponse(DisHookESPResponseCode::JsonDeserializationFailed);
@@ -160,7 +166,7 @@ void DisHookESP::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    _wifiClient.setBufferSizes(4096, 2048);
+    _wifiClient.setBufferSizes(1024, 1024);
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);
 #endif
