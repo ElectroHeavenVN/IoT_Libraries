@@ -159,7 +159,7 @@ _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Lib
     _httpClient.setTimeout(5000);
 }
 
-String ESPDiscordBot::_urlEncode(const String& str) {
+String ESPDiscordBot::_urlEncode(String str) {
     String encodedString = "";
     char c;
     char buf[4];

@@ -225,50 +225,50 @@ public:
         return *this;
     }
 
-    DiscordEmbed &WithFooter(const DiscordEmbedFooter &footer)
+    DiscordEmbed &WithFooter(DiscordEmbedFooter footer)
     {
         _footer = footer;
         return *this;
     }
 
-    DiscordEmbed &WithImage(const DiscordEmbedMedia &image)
+    DiscordEmbed &WithImage(DiscordEmbedMedia image)
     {
         _image = image;
         return *this;
     }
 
-    DiscordEmbed &WithThumbnail(const DiscordEmbedMedia &thumbnail)
+    DiscordEmbed &WithThumbnail(DiscordEmbedMedia thumbnail)
     {
         _thumbnail = thumbnail;
         return *this;
     }
 
-    DiscordEmbed &WithVideo(const DiscordEmbedMedia &video)
+    DiscordEmbed &WithVideo(DiscordEmbedMedia video)
     {
         _video = video;
         return *this;
     }
 
-    DiscordEmbed &WithProvider(const DiscordEmbedProvider &provider)
+    DiscordEmbed &WithProvider(DiscordEmbedProvider provider)
     {
         _provider = provider;
         return *this;
     }
 
-    DiscordEmbed &WithAuthor(const DiscordEmbedAuthor &author)
+    DiscordEmbed &WithAuthor(DiscordEmbedAuthor author)
     {
         _author = author;
         return *this;
     }
 
-    DiscordEmbed &AddField(const DiscordEmbedField &field)
+    DiscordEmbed &AddField(DiscordEmbedField field)
     {
         if (_fields.size() < 25)
             _fields.push_back(field);
         return *this;
     }
 
-    DiscordEmbed &AddFields(const vector<DiscordEmbedField> &fields)
+    DiscordEmbed &AddFields(vector<DiscordEmbedField> fields)
     {
         for (const auto &field : fields)
         {

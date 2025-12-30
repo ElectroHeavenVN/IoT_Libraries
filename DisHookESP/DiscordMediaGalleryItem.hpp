@@ -9,7 +9,7 @@
 class DiscordMediaGalleryItem
 {
 public:
-    DiscordMediaGalleryItem& WithDescription(const String& description)
+    DiscordMediaGalleryItem& WithDescription(String description)
     {
         _description = description;
         return *this;
@@ -21,7 +21,7 @@ public:
         return *this;
     }
 
-    DiscordMediaGalleryItem& WithMedia(const DiscordUnfurledMediaItem& media)
+    DiscordMediaGalleryItem& WithMedia(DiscordUnfurledMediaItem media)
     {
         _media = media;
         return *this;
