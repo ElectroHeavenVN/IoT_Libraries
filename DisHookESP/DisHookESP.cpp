@@ -165,7 +165,7 @@ void DisHookESP::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    _wifiClient.setBufferSizes(1024, 1024);
+    _wifiClient.setBufferSizes(1024, 2048);
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);
 #endif
