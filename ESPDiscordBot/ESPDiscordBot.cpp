@@ -94,14 +94,7 @@ ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, Stri
     String jsonString;
     if (!doc.isNull())
         serializeJson(doc, jsonString);
-    int httpResponseCode;
-    if (method == "POST")
-        httpResponseCode = _httpClient.POST(jsonString);
-    else if (method == "PUT")
-        httpResponseCode = _httpClient.PUT(jsonString);
-    else
-        httpResponseCode = _httpClient.sendRequest(method.c_str(), jsonString);
-
+    int httpResponseCode = _httpClient.sendRequest(method.c_str(), jsonString);
     JsonDocument responseDoc;
     if (httpResponseCode < 0)
     {
