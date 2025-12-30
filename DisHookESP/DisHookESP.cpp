@@ -133,17 +133,16 @@ DisHookESPResponse DisHookESP::_sendMessage(String url, JsonDocument doc)
     String jsonString;
     serializeJson(doc, jsonString);
     int httpResponseCode = _httpClient.POST(jsonString);
-    JsonDocument responseDoc;
     if (httpResponseCode < 0)
     {
         _httpClient.end();
         return DisHookESPResponse(static_cast<DisHookESPResponseCode>(httpResponseCode));
     }
+    JsonDocument responseDoc;
     Stream& rawStream = _httpClient.getStream();
     StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
     Stream& response = _httpClient.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, response);
+    DeserializationError error = deserializeJson(responseDoc, response);
     _httpClient.end();
     if (error)
         return DisHookESPResponse(DisHookESPResponseCode::JsonDeserializationFailed);
