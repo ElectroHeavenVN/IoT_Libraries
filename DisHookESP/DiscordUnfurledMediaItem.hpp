@@ -7,10 +7,10 @@ class DiscordUnfurledMediaItem
 {
 public:
     DiscordUnfurledMediaItem() : _url("") {}
-    DiscordUnfurledMediaItem(const String &url) : _url(url) {}
+    DiscordUnfurledMediaItem(String url) : _url(url) {}
 
     String GetUrl() const { return _url; }
-    void SetUrl(const String &url) { _url = url; }
+    void SetUrl(String url) { _url = url; }
 
     JsonDocument ToJsonDocument() const {
         JsonDocument doc;

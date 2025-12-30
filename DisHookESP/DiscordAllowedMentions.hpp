@@ -21,14 +21,14 @@ public:
         return *this;
     }
 
-    DiscordAllowedMentions &addUserId(const String &userId)
+    DiscordAllowedMentions &addUserId(String userId)
     {
         if (_userIds.size() < 100)
             _userIds.push_back(userId);
         return *this;
     }
 
-    DiscordAllowedMentions &addRoleId(const String &roleId)
+    DiscordAllowedMentions &addRoleId(String roleId)
     {
         if (_roleIds.size() < 100)
             _roleIds.push_back(roleId);
@@ -56,13 +56,13 @@ public:
         if (!_userIds.empty())
         {
             JsonArray usersArray = doc["users"].to<JsonArray>();
-            for (const String &userId : _userIds)
+            for (String userId : _userIds)
                 usersArray.add(userId);
         }
         if (!_roleIds.empty())
         {
             JsonArray rolesArray = doc["roles"].to<JsonArray>();
-            for (const String &roleId : _roleIds)
+            for (String roleId : _roleIds)
                 rolesArray.add(roleId);
         }
         return doc;

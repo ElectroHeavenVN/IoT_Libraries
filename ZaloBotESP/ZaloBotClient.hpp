@@ -23,18 +23,35 @@
 class ZaloBotClient
 {
 public:
-    ZaloBotClient(const String &botToken);
-    ZaloBotESPResponse SendMsg(const String &threadID, const String &content);
+    ZaloBotClient(String botToken);
+    ZaloBotClient(const char *botToken) : ZaloBotClient(String(botToken)) {}
+    ZaloBotESPResponse SendMsg(String threadID, String content);
+    ZaloBotESPResponse SendMsg(const char *threadID, const char *content)
+    {
+        return SendMsg(String(threadID), String(content));
+    }
     ZaloBotESPResponse GetPollingUpdates();
     ZaloBotESPResponse GetMe();
-    ZaloBotESPResponse SendPhoto(const String &threadID, const String &photoUrl, const String &caption);
-    ZaloBotESPResponse SendSticker(const String &threadID, const String &stickerID);
-    ZaloBotESPResponse SendChatAction(const String &threadID, const String &action);
+    ZaloBotESPResponse SendPhoto(String threadID, String photoUrl, String caption);
+    ZaloBotESPResponse SendPhoto(const char *threadID, const char *photoUrl, const char *caption)
+    {
+        return SendPhoto(String(threadID), String(photoUrl), String(caption));
+    }
+    ZaloBotESPResponse SendSticker(String threadID, String stickerID);
+    ZaloBotESPResponse SendSticker(const char *threadID, const char *stickerID)
+    {
+        return SendSticker(String(threadID), String(stickerID));
+    }
+    ZaloBotESPResponse SendChatAction(String threadID, String action);
+    ZaloBotESPResponse SendChatAction(const char *threadID, const char *action)
+    {
+        return SendChatAction(String(threadID), String(action));
+    }
 
 private:
-    ZaloBotESPResponse _httpGet(const String &endpoint);
-    ZaloBotESPResponse _httpPost(const String &endpoint, const char *keys[], const char *values[], int count);
-    void _httpGetAsync(const String &endpoint);
+    ZaloBotESPResponse _httpGet(String endpoint);
+    ZaloBotESPResponse _httpPost(String endpoint, const char *keys[], const char *values[], int count);
+    void _httpGetAsync(String endpoint);
     void _cancelPolling();
     ZaloBotESPResponse _httpGetAsyncGetResponse();
     static String _buildFormBody(const char *keys[], const char *values[], int count);

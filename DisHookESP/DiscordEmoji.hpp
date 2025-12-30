@@ -7,10 +7,10 @@ class DiscordEmoji
 {
 public:
     DiscordEmoji() : _name(""), _id(0), _animated(false) {}
-    DiscordEmoji(const String &unicodeEmoji) : _name(unicodeEmoji), _id(0), _animated(false) {}
-    DiscordEmoji(const String &name, uint64_t id, bool animated = false) : _name(name), _id(id), _animated(animated) {}
+    DiscordEmoji(String unicodeEmoji) : _name(unicodeEmoji), _id(0), _animated(false) {}
+    DiscordEmoji(String name, uint64_t id, bool animated = false) : _name(name), _id(id), _animated(animated) {}
 
-    void SetName(const String &name) { _name = name; }
+    void SetName(String name) { _name = name; }
     void SetId(uint64_t id) { _id = id; }
     void SetAnimated(bool animated) { _animated = animated; }
 

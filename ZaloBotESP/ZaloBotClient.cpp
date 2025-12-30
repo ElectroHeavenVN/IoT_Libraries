@@ -25,7 +25,7 @@ pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl
 MrY=
 -----END CERTIFICATE-----)";
 
-ZaloBotClient::ZaloBotClient(const String &botToken) : _botToken(botToken)
+ZaloBotClient::ZaloBotClient(String botToken) : _botToken(botToken)
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(ZAPPS_ME_CA));
@@ -37,7 +37,7 @@ ZaloBotClient::ZaloBotClient(const String &botToken) : _botToken(botToken)
     _asyncHttpClient.setTimeout(60000); // DON'T KNOW WHY BUT IT WORKS
 }
 
-ZaloBotESPResponse ZaloBotClient::_httpGet(const String &endpoint)
+ZaloBotESPResponse ZaloBotClient::_httpGet(String endpoint)
 {
 	if (WiFi.status() != WL_CONNECTED)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
@@ -64,7 +64,7 @@ ZaloBotESPResponse ZaloBotClient::_httpGet(const String &endpoint)
     return ZaloBotESPResponse(doc);
 }
 
-ZaloBotESPResponse ZaloBotClient::_httpPost(const String &endpoint, const char *keys[], const char *values[], int count)
+ZaloBotESPResponse ZaloBotClient::_httpPost(String endpoint, const char *keys[], const char *values[], int count)
 {
 	if (WiFi.status() != WL_CONNECTED)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
@@ -103,7 +103,7 @@ void ZaloBotClient::_cancelPolling()
     }
 }
 
-void ZaloBotClient::_httpGetAsync(const String &endpoint)
+void ZaloBotClient::_httpGetAsync(String endpoint)
 {
 	if (WiFi.status() != WL_CONNECTED)
 		return;
@@ -200,7 +200,7 @@ ZaloBotESPResponse ZaloBotClient::GetMe()
     return _httpGet("getMe");
 }
 
-ZaloBotESPResponse ZaloBotClient::SendPhoto(const String &threadID, const String &photoUrl, const String &caption)
+ZaloBotESPResponse ZaloBotClient::SendPhoto(String threadID, String photoUrl, String caption)
 {
     if (threadID.isEmpty())
         return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
@@ -211,7 +211,7 @@ ZaloBotESPResponse ZaloBotClient::SendPhoto(const String &threadID, const String
     return _httpPost("sendPhoto", keys, values, 3);
 }
 
-ZaloBotESPResponse ZaloBotClient::SendSticker(const String &threadID, const String &stickerID)
+ZaloBotESPResponse ZaloBotClient::SendSticker(String threadID, String stickerID)
 {
     if (threadID.isEmpty())
         return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
@@ -222,7 +222,7 @@ ZaloBotESPResponse ZaloBotClient::SendSticker(const String &threadID, const Stri
     return _httpPost("sendSticker", keys, values, 2);
 }
 
-ZaloBotESPResponse ZaloBotClient::SendChatAction(const String &threadID, const String &action)
+ZaloBotESPResponse ZaloBotClient::SendChatAction(String threadID, String action)
 {
     if (threadID.isEmpty())
         return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");
@@ -233,7 +233,7 @@ ZaloBotESPResponse ZaloBotClient::SendChatAction(const String &threadID, const S
     return _httpPost("sendChatAction", keys, values, 2);
 }
 
-ZaloBotESPResponse ZaloBotClient::SendMsg(const String &threadID, const String &content)
+ZaloBotESPResponse ZaloBotClient::SendMsg(String threadID, String content)
 {
     if (threadID.isEmpty())
         return ZaloBotESPResponse(ZaloBotESPResponseCode::InvalidParameter, "threadID is empty.");

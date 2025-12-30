@@ -21,6 +21,14 @@ public:
 
     static DisHookESPResponse SendMessage(String url, DiscordWebhookMessageBuilder &builder, String threadName = "", vector<uint64_t> tagIDs = {});
     static DisHookESPResponse SendMessage(String url, String content, String username = "", String avatarUrl = "", String threadName = "", vector<uint64_t> tagIDs = {});
+    static DisHookESPResponse SendMessage(const char *url, DiscordWebhookMessageBuilder &builder, const char *threadName = "", vector<uint64_t> tagIDs = {})
+    {
+        return SendMessage(String(url), builder, String(threadName), tagIDs);
+    }
+    static DisHookESPResponse SendMessage(const char *url, const char *content, const char *username = "", const char *avatarUrl = "", const char *threadName = "", vector<uint64_t> tagIDs = {})
+    {
+        return SendMessage(String(url), String(content), String(username), String(avatarUrl), String(threadName), tagIDs);
+    }
 
 private:
     static DisHookESPResponse _sendMessage(String url, JsonDocument doc);

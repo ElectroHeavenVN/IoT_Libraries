@@ -10,19 +10,19 @@ using namespace std;
 class DiscordEmbedFooter
 {
 public:
-    DiscordEmbedFooter &WithText(const String &text)
+    DiscordEmbedFooter &WithText(String text)
     {
         _text = text;
         return *this;
     }
 
-    DiscordEmbedFooter &WithIconUrl(const String &iconUrl)
+    DiscordEmbedFooter &WithIconUrl(String iconUrl)
     {
         _iconUrl = iconUrl;
         return *this;
     }
 
-    DiscordEmbedFooter &WithProxyIconUrl(const String &proxyIconUrl)
+    DiscordEmbedFooter &WithProxyIconUrl(String proxyIconUrl)
     {
         _proxyIconUrl = proxyIconUrl;
         return *this;
@@ -48,13 +48,13 @@ private:
 class DiscordEmbedMedia
 {
 public:
-    DiscordEmbedMedia &WithUrl(const String &url)
+    DiscordEmbedMedia &WithUrl(String url)
     {
         _url = url;
         return *this;
     }
 
-    DiscordEmbedMedia &WithProxyUrl(const String &proxyUrl)
+    DiscordEmbedMedia &WithProxyUrl(String proxyUrl)
     {
         _proxyUrl = proxyUrl;
         return *this;
@@ -95,13 +95,13 @@ private:
 class DiscordEmbedProvider
 {
 public:
-    DiscordEmbedProvider &WithName(const String &name)
+    DiscordEmbedProvider &WithName(String name)
     {
         _name = name;
         return *this;
     }
 
-    DiscordEmbedProvider &WithUrl(const String &url)
+    DiscordEmbedProvider &WithUrl(String url)
     {
         _url = url;
         return *this;
@@ -125,25 +125,25 @@ private:
 class DiscordEmbedAuthor
 {
 public:
-    DiscordEmbedAuthor &WithName(const String &name)
+    DiscordEmbedAuthor &WithName(String name)
     {
         _name = name;
         return *this;
     }
 
-    DiscordEmbedAuthor &WithUrl(const String &url)
+    DiscordEmbedAuthor &WithUrl(String url)
     {
         _url = url;
         return *this;
     }
 
-    DiscordEmbedAuthor &WithIconUrl(const String &iconUrl)
+    DiscordEmbedAuthor &WithIconUrl(String iconUrl)
     {
         _iconUrl = iconUrl;
         return *this;
     }
 
-    DiscordEmbedAuthor &WithProxyIconUrl(const String &proxyIconUrl)
+    DiscordEmbedAuthor &WithProxyIconUrl(String proxyIconUrl)
     {
         _proxyIconUrl = proxyIconUrl;
         return *this;
@@ -159,13 +159,13 @@ private:
 class DiscordEmbedField
 {
 public:
-    DiscordEmbedField &WithName(const String &name)
+    DiscordEmbedField &WithName(String name)
     {
         _name = name;
         return *this;
     }
 
-    DiscordEmbedField &WithValue(const String &value)
+    DiscordEmbedField &WithValue(String value)
     {
         _value = value;
         return *this;
@@ -195,25 +195,25 @@ private:
 class DiscordEmbed
 {
 public:
-    DiscordEmbed &WithTitle(const String &title)
+    DiscordEmbed &WithTitle(String title)
     {
         _title = title;
         return *this;
     }
 
-    DiscordEmbed &WithDescription(const String &description)
+    DiscordEmbed &WithDescription(String description)
     {
         _description = description;
         return *this;
     }
 
-    DiscordEmbed &WithUrl(const String &url)
+    DiscordEmbed &WithUrl(String url)
     {
         _url = url;
         return *this;
     }
 
-    DiscordEmbed &WithTimestamp(const String &timestamp)
+    DiscordEmbed &WithTimestamp(String timestamp)
     {
         _timestamp = timestamp;
         return *this;
