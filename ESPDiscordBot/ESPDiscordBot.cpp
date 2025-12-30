@@ -1,4 +1,5 @@
 #include "ESPDiscordBot.hpp"
+#include <StreamUtils.hpp>
 
 WiFiClientSecure ESPDiscordBot::_wifiClient;
 HTTPClient ESPDiscordBot::_httpClient;
@@ -91,6 +92,8 @@ ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, Stri
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::HttpConnectionFailed);
     _httpClient.addHeader("Authorization", "Bot " + token);
     _httpClient.addHeader("Content-Type", "application/json");
+    const char* keys[] = {"Transfer-Encoding"};
+    _httpClient.collectHeaders(keys, 1);
     String jsonString;
     if (!doc.isNull())
         serializeJson(doc, jsonString);
@@ -99,20 +102,21 @@ ESPDiscordBotResponse ESPDiscordBot::_sendRequest(String token, String url, Stri
     if (httpResponseCode < 0)
     {
         _httpClient.end();
+        Serial.println("HTTP request failed with code: " + String(httpResponseCode));
         return ESPDiscordBotResponse(static_cast<ESPDiscordBotResponseCode>(httpResponseCode));
 
     }
     if (httpResponseCode == 200 || httpResponseCode == 201)
     {
-        String responseBody = _httpClient.getString();
-        if (!responseBody.isEmpty())
-        {
-            DeserializationError error = deserializeJson(responseDoc, responseBody);
-            if (error)
-                return ESPDiscordBotResponse(ESPDiscordBotResponseCode::JsonDeserializationFailed);
-        }
+        Stream& rawStream = _httpClient.getStream();
+        StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
+        Stream& response = _httpClient.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, response);
         _httpClient.end();
-        return ESPDiscordBotResponse(responseDoc);
+        if (error)
+            return ESPDiscordBotResponse(ESPDiscordBotResponseCode::JsonDeserializationFailed);
+        return ESPDiscordBotResponse(doc);
     }
     else if (httpResponseCode == 204)
     {
@@ -146,8 +150,8 @@ void ESPDiscordBot::SetupClient()
     _wifiClient.setBufferSizes(4096, 2048);
     _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/ESPDiscordBot, 1.0), ESP8266HTTPClient");
 #elif defined(ESP32)
-_wifiClient.setCACert(DISCORD_COM_CA);
-_httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/ESPDiscordBot, 1.0), ESP32HTTPClient");
+    _wifiClient.setCACert(DISCORD_COM_CA);
+    _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/ESPDiscordBot, 1.0), ESP32HTTPClient");
 #endif
     _httpClient.setTimeout(5000);
 }
