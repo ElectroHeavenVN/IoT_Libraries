@@ -23,11 +23,11 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 ESPDiscordBotResponse DiscordBotClient::SendMessage(String token, String channelId, String content)
 {
     if (token.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Token is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
     if (channelId.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Channel ID is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Channel ID is empty.");
     if (content.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Content is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Content is empty.");
 
     if (WiFi.status() != WL_CONNECTED)
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::WifiNotConnected);
@@ -43,13 +43,13 @@ ESPDiscordBotResponse DiscordBotClient::SendMessage(String token, String channel
 ESPDiscordBotResponse DiscordBotClient::AddReaction(String token, String channelId, String messageId, String emoji)
 {
     if (token.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Token is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
     if (channelId.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Channel ID is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Channel ID is empty.");
     if (messageId.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Message ID is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Message ID is empty.");
     if (emoji.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Emoji is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Emoji is empty.");
 
     if (WiFi.status() != WL_CONNECTED)
         return ESPDiscordBotResponse(ESPDiscordBotResponseCode::WifiNotConnected);
@@ -67,9 +67,9 @@ ESPDiscordBotResponse DiscordBotClient::AddReaction(String token, String channel
 ESPDiscordBotResponse DiscordBotClient::GetMessages(String token, String channelId, String around, String before, String after, int limit)
 {
     if (token.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Token is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Token is empty.");
     if (channelId.isEmpty())
-        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameters, "Channel ID is empty.");
+        return ESPDiscordBotResponse(ESPDiscordBotResponseCode::InvalidParameter, "Channel ID is empty.");
     if (limit < 1 || limit > 100)
         limit = 50;  // Discord API limit is 1-100
 
