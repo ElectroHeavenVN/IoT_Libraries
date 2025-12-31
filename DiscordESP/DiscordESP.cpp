@@ -291,6 +291,24 @@ JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
     return doc;
 }
 
+String DiscordESP::_urlEncode(String str)
+{
+    String encodedString = "";
+    char buf[4];
+    for (size_t i = 0; i < str.length(); i++)
+    {
+        char c = str.charAt(i);
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+            encodedString += c;
+        else
+        {
+            snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
+            encodedString += buf;
+        }
+    }
+    return encodedString;
+}
+
 void DiscordESP::SetupClient()
 {
 #if defined(ESP8266)
