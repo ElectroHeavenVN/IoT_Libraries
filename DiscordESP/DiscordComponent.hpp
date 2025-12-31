@@ -74,18 +74,17 @@ private:
     optional<uint32_t> _id;
 };
 
-// webhooks only support link buttons
 class ButtonComponent : public DiscordComponent
 {
 public:
     ButtonComponent() : DiscordComponent(DiscordComponentType::Button) {}
     ButtonComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Button, id) {}
 
-    // ButtonComponent &WithStyle(DiscordButtonStyle style)
-    // {
-    //     _style = style;
-    //     return *this;
-    // }
+    ButtonComponent &WithStyle(DiscordButtonStyle style)
+    {
+        _style = style;
+        return *this;
+    }
 
     ButtonComponent &WithLabel(String &label)
     {
@@ -105,17 +104,17 @@ public:
         return *this;
     }
 
-    // ButtonComponent &WithCustomId(String &customId)
-    // {
-    //     _customId = customId;
-    //     return *this;
-    // }
+    ButtonComponent &WithCustomId(String &customId)
+    {
+        _customId = customId;
+        return *this;
+    }
 
-    // ButtonComponent &WithCustomId(const char* customId)
-    // {
-    //     _customId = String(customId);
-    //     return *this;
-    // }
+    ButtonComponent &WithCustomId(const char* customId)
+    {
+        _customId = String(customId);
+        return *this;
+    }
 
     ButtonComponent &WithUrl(String &url)
     {
@@ -146,19 +145,19 @@ public:
         doc["disabled"] = _disabled;
         if (_style == DiscordButtonStyle::Link && _url.has_value())
             doc["url"] = _url.value();
-        // else
-        // {
-        //     if (_customId.length() > 0)
-        //         doc["custom_id"] = _customId;
-        // }
+        else
+        {
+            if (_customId.length() > 0)
+                doc["custom_id"] = _customId;
+        }
         return doc;
     }
 
 private:
-    DiscordButtonStyle _style = DiscordButtonStyle::Link;
+    DiscordButtonStyle _style = DiscordButtonStyle::Primary;
     optional<String> _label;
     optional<DiscordEmoji> _emoji;
-    // String _customId;
+    String _customId;
     optional<String> _url;
     bool _disabled = false;
 };
@@ -393,7 +392,39 @@ private:
     vector<DiscordMediaGalleryItem> _mediaItems;
 };
 
-// FileComponent
+class FileComponent : public DiscordComponent
+{
+public:
+    FileComponent() : DiscordComponent(DiscordComponentType::File) {}
+    FileComponent(uint32_t id) : DiscordComponent(DiscordComponentType::File, id) {}
+
+    FileComponent &WithFile(DiscordUnfurledMediaItem &file)
+    {
+        _file = file;
+        return *this;
+    }
+
+    FileComponent &SetSpoiler(bool spoiler)
+    {
+        _spoiler = spoiler;
+        return *this;
+    }
+
+    JsonDocument ToJsonDocument() const override
+    {
+        JsonDocument doc = DiscordComponent::ToJsonDocument();
+        doc["file"] = _file.ToJsonDocument();
+        if (_spoiler.has_value())
+            doc["spoiler"] = _spoiler.value();
+        return doc;
+    }
+
+private:    
+    DiscordUnfurledMediaItem _file;
+    optional<bool> _spoiler;
+    // String _name;
+    // int64_t _size;
+};
 
 class SeparatorComponent : public DiscordComponent
 {
@@ -504,6 +535,8 @@ private:
     optional<bool> _spoiler;
 };
 
-// TextInput, LabelComponent and FileUpload is only used inside Modal, which webhooks do not support
-//  StringSelect, UserSelect, RoleSelect, MentionableSelect, ChannelSelect, FileUpload
-//  is interactive component, webhooks do not support it
+// TextInput, LabelComponent and FileUpload is only used inside Modal.
+// StringSelect, UserSelect, RoleSelect, MentionableSelect, ChannelSelect, FileUpload
+// is interactive components.
+// We didn't implement websocket (not sure if it even possible on ESP8266/ESP32), 
+// so interactive components are not implemented.

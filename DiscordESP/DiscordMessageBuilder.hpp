@@ -10,101 +10,109 @@
 
 using namespace std;
 
-class DiscordWebhookMessageBuilder
+//TODO: add message reference, sticker, attachments, etc.
+
+class DiscordMessageBuilder
 {
 public:
-    DiscordWebhookMessageBuilder &WithContent(String &content)
+    DiscordMessageBuilder &WithContent(String &content)
     {
         _content = content;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithContent(const char* content)
+    DiscordMessageBuilder &WithContent(const char* content)
     {
         _content = String(content);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithUsername(String &username)
+    DiscordMessageBuilder &WithUsername(String &username)
     {
         _username = username;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithUsername(const char* username)
+    DiscordMessageBuilder &WithUsername(const char* username)
     {
         _username = String(username);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithAvatarUrl(String &avatarUrl)
+    DiscordMessageBuilder &WithAvatarUrl(String &avatarUrl)
     {
         _avatarUrl = avatarUrl;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithAvatarUrl(const char* avatarUrl)
+    DiscordMessageBuilder &WithAvatarUrl(const char* avatarUrl)
     {
         _avatarUrl = String(avatarUrl);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &SetTTS(bool tts)
+    DiscordMessageBuilder &SetTTS(bool tts)
     {
         _tts = tts;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &WithAllowedMentions(DiscordAllowedMentions &allowedMentions)
+    DiscordMessageBuilder &SetIsVoiceMessage(bool isVoiceMessage)
+    {
+        _isVoiceMessage = isVoiceMessage;
+        return *this;
+    }
+
+    DiscordMessageBuilder &WithAllowedMentions(DiscordAllowedMentions &allowedMentions)
     {
         _allowedMentions = allowedMentions;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &AddComponent(DiscordComponent &component)
+    DiscordMessageBuilder &AddComponent(DiscordComponent &component)
     {
         _components.push_back(component);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &AddComponents(vector<reference_wrapper<DiscordComponent>> &components)
+    DiscordMessageBuilder &AddComponents(vector<reference_wrapper<DiscordComponent>> &components)
     {
         for (DiscordComponent &component : components)
             _components.push_back(component);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &ClearComponents()
+    DiscordMessageBuilder &ClearComponents()
     {
         _components.clear();
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &AddEmbed(DiscordEmbed &embed)
+    DiscordMessageBuilder &AddEmbed(DiscordEmbed &embed)
     {
         _embeds.push_back(embed);
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &AddEmbeds(vector<DiscordEmbed> &embeds)
+    DiscordMessageBuilder &AddEmbeds(vector<DiscordEmbed> &embeds)
     {
         _embeds.insert(_embeds.end(), embeds.begin(), embeds.end());
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &ClearEmbeds()
+    DiscordMessageBuilder &ClearEmbeds()
     {
         _embeds.clear();
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &SetSuppressEmbeds(bool suppress = true)
+    DiscordMessageBuilder &SetSuppressEmbeds(bool suppress = true)
     {
         _suppressEmbeds = suppress;
         return *this;
     }
 
-    DiscordWebhookMessageBuilder &SetSuppressNotifications(bool suppress = true)
+    DiscordMessageBuilder &SetSuppressNotifications(bool suppress = true)
     {
         _suppressNotifications = suppress;
         return *this;
@@ -133,6 +141,11 @@ public:
     bool IsTTS() const
     {
         return _tts;
+    }
+
+    bool IsVoiceMessage() const
+    {
+        return _isVoiceMessage;
     }
 
     optional<String> GetContent() const
@@ -175,4 +188,5 @@ private:
     vector<reference_wrapper<DiscordComponent>> _components;
     bool _suppressEmbeds = false;
     bool _suppressNotifications = false;
+    bool _isVoiceMessage = false;
 };
