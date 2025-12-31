@@ -134,6 +134,11 @@ public:
         return *this;
     }
 
+    DiscordButtonStyle GetStyle() const
+    {
+        return _style;
+    }
+
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();

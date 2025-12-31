@@ -21,7 +21,7 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 
 WiFiClientSecure DiscordESP::_wifiClient;
 HTTPClient DiscordESP::_httpClient;
-DeserializationOption::Filter DiscordESP::_currentFilter = DiscordESP::DefaultJSONFilter();
+std::optional<DeserializationOption::Filter> DiscordESP::_currentFilter = std::nullopt;
 
 DiscordESPResponse DiscordESP::Bot::SendMessage(String token, String channelId, String content)
 {
@@ -38,6 +38,32 @@ DiscordESPResponse DiscordESP::Bot::SendMessage(String token, String channelId, 
 
     JsonDocument doc;
     doc["content"] = content;
+    char url[256];
+    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId.c_str());
+    return _sendRequest(token, String(url), "POST", doc);
+}
+
+DiscordESPResponse DiscordESP::Bot::SendMessage(String token, String channelId, DiscordMessageBuilder &builder)
+{
+    if (token.isEmpty())
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Token is empty.");
+    if (channelId.isEmpty())
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Channel ID is empty.");
+    if (WiFi.status() != WL_CONNECTED)
+        return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
+    if (builder.IsComponentV2())
+    {
+        if (builder.GetComponents().empty())
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 but has no components.");
+        if (!builder.GetEmbeds().empty() || builder.GetContent().has_value())
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 can only contain components.");
+    }
+    else
+    {
+        if (builder.GetEmbeds().size() > 10)
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Cannot have more than 10 embeds in a message.");
+    }
+    JsonDocument doc = _build(builder, false);
     char url[256];
     snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId.c_str());
     return _sendRequest(token, String(url), "POST", doc);
@@ -101,57 +127,26 @@ DiscordESPResponse DiscordESP::Webhook::SendMessage(String webhookUrl, DiscordMe
         else
             webhookUrl += "&wait=true";
     }
-    bool isComponentV2 = builder.IsComponentV2();
-    auto components = builder.GetComponents();
-    auto embeds = builder.GetEmbeds();
-    if (isComponentV2)
+    if (builder.IsComponentV2())
     {
-        if (components.empty())
+        if (builder.GetComponents().empty())
             return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 but has no components.");
-        if (!embeds.empty() || builder.GetContent().has_value())
+        if (!builder.GetEmbeds().empty() || builder.GetContent().has_value())
             return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 can only contain components.");
         webhookUrl += "&with_components=true";
     }
-    uint64_t flags = 0;
-    if (builder.SuppressesEmbeds())
-        flags |= static_cast<uint64_t>(DiscordMessageFlags::SuppressEmbeds);
-    if (builder.SuppressesNotifications())
-        flags |= static_cast<uint64_t>(DiscordMessageFlags::SuppressNotifications);
-    if (builder.IsVoiceMessage())
-        flags |= static_cast<uint64_t>(DiscordMessageFlags::IsVoiceMessage);
-    if (isComponentV2)
-        flags |= static_cast<uint64_t>(DiscordMessageFlags::IsComponentV2);
-
-    JsonDocument doc;
-    doc["flags"] = flags;
+    else
+    {
+        if (builder.GetEmbeds().size() > 10)
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Cannot have more than 10 embeds in a message.");
+    }
+    JsonDocument doc = _build(builder, true);
     if (!threadName.isEmpty())
     {
         doc["thread_name"] = threadName;
         JsonArray tagIDsArray = doc["applied_tags"].to<JsonArray>();
         for (const uint64_t &tagID : tagIDs)
             tagIDsArray.add(tagID);
-    }
-    if (builder.GetContent().has_value())
-        doc["content"] = builder.GetContent().value();
-    if (builder.GetUsername().has_value())
-        doc["username"] = builder.GetUsername().value();
-    if (builder.GetAvatarUrl().has_value())
-        doc["avatar_url"] = builder.GetAvatarUrl().value();
-    if (builder.IsTTS())
-        doc["tts"] = true;
-    if (builder.GetAllowedMentions().has_value())
-        doc["allowed_mentions"] = builder.GetAllowedMentions().value().ToJsonDocument();
-    if (!embeds.empty())
-    {
-        JsonArray embedsArray = doc["embeds"].to<JsonArray>();
-        for (auto &embed : embeds)
-            embedsArray.add(embed.ToJsonDocument());
-    }
-    if (!components.empty())
-    {
-        JsonArray componentsArray = doc["components"].to<JsonArray>();
-        for (DiscordComponent &component : components)
-            componentsArray.add(component.ToJsonDocument());
     }
     return _sendRequest("", webhookUrl, "POST", doc);
 }
@@ -211,13 +206,25 @@ DiscordESPResponse DiscordESP::_sendRequest(String token, String url, String met
         _httpClient.end();
         return DiscordESPResponse(DiscordESPResponseCode::NoContent);
     }
-    Stream &rawStream = _httpClient.getStream();
-    StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
-    Stream &response = _httpClient.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
-    DeserializationError error = deserializeJson(responseDoc, response, _currentFilter);
+    DeserializationError error;
+    if (strcasecmp(_httpClient.header("Transfer-Encoding").c_str(), "chunked") == 0)
+    {
+        StreamUtils::ChunkDecodingStream decodedStream(_httpClient.getStream());
+        if (_currentFilter.has_value())
+            error = deserializeJson(responseDoc, decodedStream, _currentFilter.value());
+        else
+            error = deserializeJson(responseDoc, decodedStream);
+    }
+    else
+    {
+        if (_currentFilter.has_value())
+            error = deserializeJson(responseDoc, _httpClient.getString(), _currentFilter.value());
+        else
+            error = deserializeJson(responseDoc, _httpClient.getString());
+    }
     _httpClient.end();
-    if (error)
-        return DiscordESPResponse(DiscordESPResponseCode::JsonDeserializationFailed);
+    if (error.code() != 0)
+        return DiscordESPResponse(DiscordESPResponseCode::JsonDeserializationFailed, "JSON deserialization failed: " + String(error.c_str()) + " (" + String(error.code()) + ")");
     if (httpResponseCode == 200 || httpResponseCode == 201)
         return DiscordESPResponse(responseDoc);
     if (httpResponseCode == 400)
@@ -235,11 +242,60 @@ DiscordESPResponse DiscordESP::_sendRequest(String token, String url, String met
     return DiscordESPResponse(DiscordESPResponseCode::UnknownError, responseDoc);
 }
 
+JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
+{
+    JsonDocument doc;
+    bool isComponentV2 = builder.IsComponentV2();
+    auto components = builder.GetComponents();
+    auto embeds = builder.GetEmbeds();
+    uint64_t flags = 0;
+    if (builder.SuppressesEmbeds())
+        flags |= static_cast<uint64_t>(DiscordMessageFlags::SuppressEmbeds);
+    if (builder.SuppressesNotifications())
+        flags |= static_cast<uint64_t>(DiscordMessageFlags::SuppressNotifications);
+    if (isComponentV2)
+        flags |= static_cast<uint64_t>(DiscordMessageFlags::IsComponentV2);
+    if (builder.IsVoiceMessage() && !forWebhook)
+        flags |= static_cast<uint64_t>(DiscordMessageFlags::IsVoiceMessage);
+    doc["flags"] = flags;
+    if (builder.GetContent().has_value())
+        doc["content"] = builder.GetContent().value();
+    if (builder.GetUsername().has_value())
+        doc["username"] = builder.GetUsername().value();
+    if (builder.GetAvatarUrl().has_value())
+        doc["avatar_url"] = builder.GetAvatarUrl().value();
+    if (builder.IsTTS())
+        doc["tts"] = true;
+    if (builder.GetAllowedMentions().has_value())
+        doc["allowed_mentions"] = builder.GetAllowedMentions().value().ToJsonDocument();
+    if (!embeds.empty())
+    {
+        JsonArray embedsArray = doc["embeds"].to<JsonArray>();
+        for (auto &embed : embeds)
+            embedsArray.add(embed.ToJsonDocument());
+    }
+    if (!components.empty())
+    {
+        JsonArray componentsArray = doc["components"].to<JsonArray>();
+        for (DiscordComponent &component : components)
+        {
+            if (forWebhook && component.GetType() == DiscordComponentType::Button)
+            {
+                ButtonComponent &button = static_cast<ButtonComponent &>(component);
+                if (button.GetStyle() != DiscordButtonStyle::Link)
+                    continue;
+            }
+            componentsArray.add(component.ToJsonDocument());
+        }
+    }
+    return doc;
+}
+
 void DiscordESP::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    _wifiClient.setBufferSizes(4096, 2048);
+    // _wifiClient.setBufferSizes(4096, 2048);
     _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/DiscordESP, 1.0), ESP8266HTTPClient");
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);

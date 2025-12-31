@@ -10,6 +10,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #endif
+#include <optional>
 #include "DiscordMessageBuilder.hpp"
 #include "DiscordESPResponse.h"
 #include "DiscordComponent.hpp"
@@ -19,13 +20,7 @@ class DiscordESP
 public:
     static void SetupClient();
     static void SetJSONFilter(DeserializationOption::Filter filter) { _currentFilter = filter; }
-
-    static DeserializationOption::Filter DefaultJSONFilter() 
-    {
-        JsonDocument filter;
-        filter.set(true);
-        return DeserializationOption::Filter(filter);
-    }
+    static void ClearJSONFilter() { _currentFilter = std::nullopt; }
 
     struct Webhook
     {
@@ -42,6 +37,11 @@ public:
         static DiscordESPResponse SendMessage(const char *token, uint64_t channelId, const char *content) { return SendMessage(String(token), String(channelId), String(content)); }
         static DiscordESPResponse SendMessage(String token, uint64_t channelId, String content) { return SendMessage(token, String(channelId), content); }
         
+        static DiscordESPResponse SendMessage(String token, String channelId, DiscordMessageBuilder &builder);
+        static DiscordESPResponse SendMessage(const char *token, const char *channelId, DiscordMessageBuilder &builder) { return SendMessage(String(token), String(channelId), builder); }
+        static DiscordESPResponse SendMessage(const char *token, uint64_t channelId, DiscordMessageBuilder &builder) { return SendMessage(String(token), String(channelId), builder); }
+        static DiscordESPResponse SendMessage(String token, uint64_t channelId, DiscordMessageBuilder &builder) { return SendMessage(token, String(channelId), builder); }
+
         static DiscordESPResponse AddReaction(String token, String channelId, String messageId, String emoji);
         static DiscordESPResponse AddReaction(const char *token, const char *channelId, const char *messageId, const char *emoji) { return AddReaction(String(token), String(channelId), String(messageId), String(emoji)); }
         static DiscordESPResponse AddReaction(const char *token, uint64_t channelId, uint64_t messageId, const char *emoji) { return AddReaction(String(token), String(channelId), String(messageId), String(emoji)); }
@@ -54,9 +54,10 @@ public:
     };
 
 private:
+    static JsonDocument _build(DiscordMessageBuilder &builder, bool forWebhook);
     static String _urlEncode(String str);
     static DiscordESPResponse _sendRequest(String token, String url, String method, JsonDocument doc);
     static WiFiClientSecure _wifiClient;
     static HTTPClient _httpClient;
-    static DeserializationOption::Filter _currentFilter;
+    static std::optional<DeserializationOption::Filter> _currentFilter;
 };
