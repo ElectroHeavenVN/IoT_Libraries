@@ -246,7 +246,7 @@ JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
 {
     JsonDocument doc;
     bool isComponentV2 = builder.IsComponentV2();
-    auto components = builder.GetComponents();
+    const auto &components = builder.GetComponents();
     auto embeds = builder.GetEmbeds();
     uint64_t flags = 0;
     if (builder.SuppressesEmbeds())
@@ -277,15 +277,15 @@ JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
     if (!components.empty())
     {
         JsonArray componentsArray = doc["components"].to<JsonArray>();
-        for (DiscordComponent &component : components)
+        for (const auto &component : components)
         {
-            if (forWebhook && component.GetType() == DiscordComponentType::Button)
+            if (forWebhook && component->GetType() == DiscordComponentType::Button)
             {
-                ButtonComponent &button = static_cast<ButtonComponent &>(component);
-                if (button.GetStyle() != DiscordButtonStyle::Link)
+                const ButtonComponent *button = static_cast<const ButtonComponent *>(component.get());
+                if (button->GetStyle() != DiscordButtonStyle::Link)
                     continue;
             }
-            componentsArray.add(component.ToJsonDocument());
+            componentsArray.add(component->ToJsonDocument());
         }
     }
     return doc;

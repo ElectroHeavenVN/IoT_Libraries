@@ -15,20 +15,20 @@ enum class DiscordMentionType
 class DiscordAllowedMentions
 {
 public:
-    DiscordAllowedMentions &setType(DiscordMentionType type)
+    DiscordAllowedMentions &SetType(DiscordMentionType type)
     {
         _type = type;
         return *this;
     }
 
-    DiscordAllowedMentions &addUserId(String userId)
+    DiscordAllowedMentions &AddUserId(String userId)
     {
         if (_userIds.size() < 100)
             _userIds.push_back(userId);
         return *this;
     }
 
-    DiscordAllowedMentions &addRoleId(String roleId)
+    DiscordAllowedMentions &AddRoleId(String roleId)
     {
         if (_roleIds.size() < 100)
             _roleIds.push_back(roleId);

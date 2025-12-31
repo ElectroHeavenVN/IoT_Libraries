@@ -4,7 +4,7 @@
 #include <ArduinoJson.h>
 #include <vector>
 #include <optional>
-#include <functional>
+#include <memory>
 #include "DiscordEmbed.hpp"
 #include "DiscordEmoji.hpp"
 #include "DiscordUnfurledMediaItem.hpp"
@@ -46,6 +46,10 @@ enum class DiscordButtonStyle : uint32_t
 class DiscordComponent
 {
 public:
+    virtual ~DiscordComponent() = default;
+
+    virtual unique_ptr<DiscordComponent> Clone() const = 0;
+
     virtual JsonDocument ToJsonDocument() const
     {
         JsonDocument doc;
@@ -80,13 +84,21 @@ public:
     ButtonComponent() : DiscordComponent(DiscordComponentType::Button) {}
     ButtonComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Button, id) {}
 
-    ButtonComponent &WithStyle(DiscordButtonStyle style)
+    ButtonComponent(DiscordButtonStyle style) : DiscordComponent(DiscordComponentType::Button), _style(style) {}
+    ButtonComponent(uint32_t id, DiscordButtonStyle style) : DiscordComponent(DiscordComponentType::Button, id), _style(style) {}
+
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        return make_unique<ButtonComponent>(*this);
+    }
+
+    ButtonComponent WithStyle(DiscordButtonStyle style)
     {
         _style = style;
         return *this;
     }
 
-    ButtonComponent &WithLabel(String &label)
+    ButtonComponent &WithLabel(String label)
     {
         _label = label;
         return *this;
@@ -98,13 +110,13 @@ public:
         return *this;
     }
 
-    ButtonComponent &WithEmoji(DiscordEmoji &emoji)
+    ButtonComponent &WithEmoji(DiscordEmoji emoji)
     {
-        _emoji = emoji;
+        _emoji = std::move(emoji);
         return *this;
     }
 
-    ButtonComponent &WithCustomId(String &customId)
+    ButtonComponent &WithCustomId(String customId)
     {
         _customId = customId;
         return *this;
@@ -116,7 +128,7 @@ public:
         return *this;
     }
 
-    ButtonComponent &WithUrl(String &url)
+    ButtonComponent &WithUrl(String url)
     {
         _url = url;
         return *this;
@@ -174,24 +186,29 @@ public:
     ActionRowComponent() : DiscordComponent(DiscordComponentType::ActionRow) {}
     ActionRowComponent(uint32_t id) : DiscordComponent(DiscordComponentType::ActionRow, id) {}
 
-    ActionRowComponent &AddComponent(DiscordComponent &component)
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        auto clone = make_unique<ActionRowComponent>();
+        for (const auto &component : _components)
+            clone->_components.push_back(component->Clone());
+        return clone;
+    }
+
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value && !is_lvalue_reference<T>::value>>
+    ActionRowComponent &AddComponent(T &&component)
     {
         if (_components.size() >= 5 || component.GetType() != DiscordComponentType::Button)
             return *this;
-        _components.push_back(component);
+        _components.push_back(make_unique<decay_t<T>>(std::move(component)));
         return *this;
     }
 
-    ActionRowComponent &AddComponents(vector<DiscordComponent> &components)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value>, typename = void>
+    ActionRowComponent &AddComponent(T &component)
     {
-        for (DiscordComponent &component : components)
-        {
-            if (_components.size() >= 5)
-                break;
-            if (component.GetType() != DiscordComponentType::Button)
-                continue;
-            _components.push_back(component);
-        }
+        if (_components.size() >= 5 || component.GetType() != DiscordComponentType::Button)
+            return *this;
+        _components.push_back(component.Clone());
         return *this;
     }
 
@@ -205,13 +222,13 @@ public:
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
         JsonArray componentsArray = doc["components"].to<JsonArray>();
-        for (DiscordComponent &component : _components)
-            componentsArray.add(component.ToJsonDocument());
+        for (const auto &component : _components)
+            componentsArray.add(component->ToJsonDocument());
         return doc;
     }
 
 private:
-    vector<reference_wrapper<DiscordComponent>> _components;
+    vector<unique_ptr<DiscordComponent>> _components;
 };
 
 // Discord said "Don't hardcode components to contain only text components", so we component-related methods still accept DiscordComponent as parameter
@@ -221,26 +238,35 @@ public:
     SectionComponent() : DiscordComponent(DiscordComponentType::Section) {}
     SectionComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Section, id) {}
 
-    SectionComponent &AddComponent(DiscordComponent &component)
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        auto clone = make_unique<SectionComponent>();
+        for (const auto &component : _components)
+            clone->_components.push_back(component->Clone());
+        if (_accessory)
+            clone->_accessory = _accessory->Clone();
+        return clone;
+    }
+
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value && !is_lvalue_reference<T>::value>>
+    SectionComponent &AddComponent(T &&component)
     {
         if (_components.size() >= 3)
             return *this;
         if (component.GetType() != DiscordComponentType::TextDisplay)
             return *this;
-        _components.push_back(component);
+        _components.push_back(make_unique<decay_t<T>>(std::move(component)));
         return *this;
     }
 
-    SectionComponent &AddComponents(vector<DiscordComponent> &components)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value>, typename = void>
+    SectionComponent &AddComponent(T &component)
     {
-        for (DiscordComponent &component : components)
-        {
-            if (_components.size() >= 3)
-                break;
-            if (component.GetType() != DiscordComponentType::TextDisplay)
-                continue;
-            _components.push_back(component);
-        }
+        if (_components.size() >= 3)
+            return *this;
+        if (component.GetType() != DiscordComponentType::TextDisplay)
+            return *this;
+        _components.push_back(component.Clone());
         return *this;
     }
 
@@ -250,13 +276,26 @@ public:
         return *this;
     }
 
-    SectionComponent &SetAccessory(DiscordComponent &accessory)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value && !is_lvalue_reference<T>::value>>
+    SectionComponent &SetAccessory(T &&accessory)
     {
         DiscordComponentType type = accessory.GetType();
         if (type == DiscordComponentType::Button ||
             type == DiscordComponentType::Thumbnail)
         {
-            _accessory = accessory;
+            _accessory = make_unique<decay_t<T>>(std::move(accessory));
+        }
+        return *this;
+    }
+
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value>, typename = void>
+    SectionComponent &SetAccessory(T &accessory)
+    {
+        DiscordComponentType type = accessory.GetType();
+        if (type == DiscordComponentType::Button ||
+            type == DiscordComponentType::Thumbnail)
+        {
+            _accessory = accessory.Clone();
         }
         return *this;
     }
@@ -265,16 +304,16 @@ public:
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
         JsonArray componentsArray = doc["components"].to<JsonArray>();
-        for (DiscordComponent &component : _components)
-            componentsArray.add(component.ToJsonDocument());
-        if (_accessory.has_value())
-            doc["accessory"] = _accessory.value().get().ToJsonDocument();
+        for (const auto &component : _components)
+            componentsArray.add(component->ToJsonDocument());
+        if (_accessory)
+            doc["accessory"] = _accessory->ToJsonDocument();
         return doc;
     }
 
 private:
-    vector<reference_wrapper<DiscordComponent>> _components;
-    optional<reference_wrapper<DiscordComponent>> _accessory;
+    vector<unique_ptr<DiscordComponent>> _components;
+    unique_ptr<DiscordComponent> _accessory;
 };
 
 class TextDisplayComponent : public DiscordComponent
@@ -283,7 +322,17 @@ public:
     TextDisplayComponent() : DiscordComponent(DiscordComponentType::TextDisplay) {}
     TextDisplayComponent(uint32_t id) : DiscordComponent(DiscordComponentType::TextDisplay, id) {}
 
-    TextDisplayComponent &WithContent(String &content)
+    TextDisplayComponent(String content) : DiscordComponent(DiscordComponentType::TextDisplay), _content(content) {}
+    TextDisplayComponent(const char *content) : DiscordComponent(DiscordComponentType::TextDisplay), _content(String(content)) {}
+    TextDisplayComponent(uint32_t id, String content) : DiscordComponent(DiscordComponentType::TextDisplay, id), _content(content) {}
+    TextDisplayComponent(uint32_t id, const char *content) : DiscordComponent(DiscordComponentType::TextDisplay, id), _content(String(content)) {}
+
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        return make_unique<TextDisplayComponent>(*this);
+    }
+    
+    TextDisplayComponent &WithContent(String content)
     {
         _content = content;
         return *this;
@@ -312,7 +361,12 @@ public:
     ThumbnailComponent() : DiscordComponent(DiscordComponentType::Thumbnail) {}
     ThumbnailComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Thumbnail, id) {}
 
-    ThumbnailComponent &WithDescription(String &description)
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        return make_unique<ThumbnailComponent>(*this);
+    }
+
+    ThumbnailComponent &WithDescription(String description)
     {
         _description = description;
         return *this;
@@ -330,9 +384,9 @@ public:
         return *this;
     }
 
-    ThumbnailComponent &WithMedia(DiscordUnfurledMediaItem &media)
+    ThumbnailComponent &WithMedia(DiscordUnfurledMediaItem media)
     {
-        _media = media;
+        _media = std::move(media);
         return *this;
     }
 
@@ -359,21 +413,26 @@ public:
     MediaGalleryComponent() : DiscordComponent(DiscordComponentType::MediaGallery) {}
     MediaGalleryComponent(uint32_t id) : DiscordComponent(DiscordComponentType::MediaGallery, id) {}
 
-    MediaGalleryComponent &AddMediaItem(DiscordMediaGalleryItem &item)
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        return make_unique<MediaGalleryComponent>(*this);
+    }
+
+    MediaGalleryComponent &AddMediaItem(DiscordMediaGalleryItem item)
     {
         if (_mediaItems.size() >= 10)
             return *this;
-        _mediaItems.push_back(item);
+        _mediaItems.push_back(std::move(item));
         return *this;
     }
 
-    MediaGalleryComponent &AddMediaItems(vector<DiscordMediaGalleryItem> &items)
+    MediaGalleryComponent &AddMediaItems(vector<DiscordMediaGalleryItem> items)
     {
-        for (DiscordMediaGalleryItem &item : items)
+        for (auto &item : items)
         {
             if (_mediaItems.size() >= 10)
                 break;
-            _mediaItems.push_back(item);
+            _mediaItems.push_back(std::move(item));
         }
         return *this;
     }
@@ -403,9 +462,14 @@ public:
     FileComponent() : DiscordComponent(DiscordComponentType::File) {}
     FileComponent(uint32_t id) : DiscordComponent(DiscordComponentType::File, id) {}
 
-    FileComponent &WithFile(DiscordUnfurledMediaItem &file)
+    unique_ptr<DiscordComponent> Clone() const override
     {
-        _file = file;
+        return make_unique<FileComponent>(*this);
+    }
+
+    FileComponent &WithFile(DiscordUnfurledMediaItem file)
+    {
+        _file = std::move(file);
         return *this;
     }
 
@@ -437,6 +501,18 @@ public:
     SeparatorComponent() : DiscordComponent(DiscordComponentType::Separator) {}
     SeparatorComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Separator, id) {}
 
+    SeparatorComponent(bool divider) : DiscordComponent(DiscordComponentType::Separator), _divider(divider) {}
+    SeparatorComponent(uint32_t id, bool divider) : DiscordComponent(DiscordComponentType::Separator, id), _divider(divider) {}
+    // SeparatorComponent(uint32_t spacing) : DiscordComponent(DiscordComponentType::Separator), _spacing(spacing) {}
+    SeparatorComponent(uint32_t id, uint32_t spacing) : DiscordComponent(DiscordComponentType::Separator, id), _spacing(spacing) {}
+    SeparatorComponent(bool divider, uint32_t spacing) : DiscordComponent(DiscordComponentType::Separator), _divider(divider), _spacing(spacing) {}
+    SeparatorComponent(uint32_t id, bool divider, uint32_t spacing) : DiscordComponent(DiscordComponentType::Separator, id), _divider(divider), _spacing(spacing) {}
+
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        return make_unique<SeparatorComponent>(*this);
+    }
+    
     SeparatorComponent &SetDivider(bool divider)
     {
         _divider = divider;
@@ -470,7 +546,18 @@ public:
     ContainerComponent() : DiscordComponent(DiscordComponentType::Container) {}
     ContainerComponent(uint32_t id) : DiscordComponent(DiscordComponentType::Container, id) {}
 
-    ContainerComponent &AddComponent(DiscordComponent &component)
+    unique_ptr<DiscordComponent> Clone() const override
+    {
+        auto clone = make_unique<ContainerComponent>();
+        for (const auto &component : _components)
+            clone->_components.push_back(component->Clone());
+        clone->_accentColor = _accentColor;
+        clone->_spoiler = _spoiler;
+        return clone;
+    }
+
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value && !is_lvalue_reference<T>::value>>
+    ContainerComponent &AddComponent(T &&component)
     {
         DiscordComponentType type = component.GetType();
         if (type == DiscordComponentType::ActionRow ||
@@ -480,25 +567,23 @@ public:
             type == DiscordComponentType::Separator ||
             type == DiscordComponentType::File)
         {
-            _components.push_back(component);
+            _components.push_back(make_unique<decay_t<T>>(std::move(component)));
         }
         return *this;
     }
 
-    ContainerComponent &AddComponents(vector<DiscordComponent> &components)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value>, typename = void>
+    ContainerComponent &AddComponent(T &component)
     {
-        for (DiscordComponent &component : components)
+        DiscordComponentType type = component.GetType();
+        if (type == DiscordComponentType::ActionRow ||
+            type == DiscordComponentType::TextDisplay ||
+            type == DiscordComponentType::Section ||
+            type == DiscordComponentType::MediaGallery ||
+            type == DiscordComponentType::Separator ||
+            type == DiscordComponentType::File)
         {
-            DiscordComponentType type = component.GetType();
-            if (type == DiscordComponentType::ActionRow ||
-                type == DiscordComponentType::TextDisplay ||
-                type == DiscordComponentType::Section ||
-                type == DiscordComponentType::MediaGallery ||
-                type == DiscordComponentType::Separator ||
-                type == DiscordComponentType::File)
-            {
-                _components.push_back(component);
-            }
+            _components.push_back(component.Clone());
         }
         return *this;
     }
@@ -525,8 +610,8 @@ public:
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
         JsonArray componentsArray = doc["components"].to<JsonArray>();
-        for (DiscordComponent &component : _components)
-            componentsArray.add(component.ToJsonDocument());
+        for (const auto &component : _components)
+            componentsArray.add(component->ToJsonDocument());
         if (_accentColor.has_value())
             doc["accent_color"] = _accentColor.value();
         if (_spoiler.has_value())
@@ -535,7 +620,7 @@ public:
     }
 
 private:
-    vector<reference_wrapper<DiscordComponent>> _components;
+    vector<unique_ptr<DiscordComponent>> _components;
     optional<uint32_t> _accentColor;
     optional<bool> _spoiler;
 };

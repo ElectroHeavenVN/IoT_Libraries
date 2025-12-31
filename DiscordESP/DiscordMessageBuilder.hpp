@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <vector>
 #include <optional>
-#include <functional>
+#include <memory>
 #include "DiscordEmbed.hpp"
 #include "DiscordComponent.hpp"
 #include "DiscordAllowedMentions.hpp"
@@ -15,7 +15,7 @@ using namespace std;
 class DiscordMessageBuilder
 {
 public:
-    DiscordMessageBuilder &WithContent(String &content)
+    DiscordMessageBuilder &WithContent(String content)
     {
         _content = content;
         return *this;
@@ -27,7 +27,7 @@ public:
         return *this;
     }
 
-    DiscordMessageBuilder &WithUsername(String &username)
+    DiscordMessageBuilder &WithUsername(String username)
     {
         _username = username;
         return *this;
@@ -39,7 +39,7 @@ public:
         return *this;
     }
 
-    DiscordMessageBuilder &WithAvatarUrl(String &avatarUrl)
+    DiscordMessageBuilder &WithAvatarUrl(String avatarUrl)
     {
         _avatarUrl = avatarUrl;
         return *this;
@@ -69,16 +69,17 @@ public:
         return *this;
     }
 
-    DiscordMessageBuilder &AddComponent(DiscordComponent &component)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value && !is_lvalue_reference<T>::value>>
+    DiscordMessageBuilder &AddComponent(T &&component)
     {
-        _components.push_back(component);
+        _components.push_back(make_unique<decay_t<T>>(std::move(component)));
         return *this;
     }
 
-    DiscordMessageBuilder &AddComponents(vector<reference_wrapper<DiscordComponent>> &components)
+    template <typename T, typename = enable_if_t<is_base_of<DiscordComponent, decay_t<T>>::value>, typename = void>
+    DiscordMessageBuilder &AddComponent(T &component)
     {
-        for (DiscordComponent &component : components)
-            _components.push_back(component);
+        _components.push_back(component.Clone());
         return *this;
     }
 
@@ -120,9 +121,9 @@ public:
 
     bool IsComponentV2()
     {
-        for (DiscordComponent &component : _components)
+        for (const auto &component : _components)
         {
-            if (component.IsV2())
+            if (component->IsV2())
                 return true;
         }
         return false;
@@ -173,7 +174,7 @@ public:
         return _allowedMentions;
     }
 
-    vector<reference_wrapper<DiscordComponent>> GetComponents() const
+    const vector<unique_ptr<DiscordComponent>> &GetComponents() const
     {
         return _components;
     }
@@ -185,7 +186,7 @@ private:
     bool _tts = false;
     vector<DiscordEmbed> _embeds;
     optional<DiscordAllowedMentions> _allowedMentions;
-    vector<reference_wrapper<DiscordComponent>> _components;
+    vector<unique_ptr<DiscordComponent>> _components;
     bool _suppressEmbeds = false;
     bool _suppressNotifications = false;
     bool _isVoiceMessage = false;
