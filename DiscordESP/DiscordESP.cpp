@@ -313,7 +313,7 @@ void DiscordESP::SetupClient()
 {
 #if defined(ESP8266)
     _wifiClient.setTrustAnchors(new BearSSL::X509List(DISCORD_COM_CA));
-    // _wifiClient.setBufferSizes(4096, 2048);
+    _wifiClient.setBufferSizes(4096, 2048);
     _httpClient.setUserAgent("DiscordBot (https://github.com/ElectroHeavenVN/IoT_Libraries/tree/main/DiscordESP, 1.0), ESP8266HTTPClient");
 #elif defined(ESP32)
     _wifiClient.setCACert(DISCORD_COM_CA);
