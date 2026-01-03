@@ -1,4 +1,4 @@
-#include <DiscordESP.hpp>
+#include "DiscordESP.hpp"
 #include <StreamUtils.hpp>
 #include "DiscordMessageFlags.h"
 
@@ -299,7 +299,6 @@ DiscordESPResponse DiscordESP::_sendRequest(const char *token, const char *url, 
     if (!doc.isNull())
         serializeJson(doc, jsonString);
     int httpResponseCode = _httpClient.sendRequest(method, jsonString);
-    JsonDocument responseDoc;
     if (httpResponseCode < 0)
     {
         _httpClient.end();
@@ -310,6 +309,7 @@ DiscordESPResponse DiscordESP::_sendRequest(const char *token, const char *url, 
         _httpClient.end();
         return DiscordESPResponse(DiscordESPResponseCode::NoContent);
     }
+    JsonDocument responseDoc;
     DeserializationError error;
     if (strcasecmp(_httpClient.header("Transfer-Encoding").c_str(), "chunked") == 0)
     {

@@ -46,14 +46,14 @@ public:
     DiscordESPResponse(DiscordESPResponseCode code, JsonDocument doc) : errorCode(code), responseData(doc) { }
     DiscordESPResponse(DiscordESPResponseCode code, uint32_t innerErrorCode) : errorCode(code), _innerErrorCode(innerErrorCode) { }
     DiscordESPResponse(DiscordESPResponseCode code, uint32_t innerErrorCode, JsonDocument doc) : errorCode(code), _innerErrorCode(innerErrorCode), responseData(doc) { }
-    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage) : errorCode(code), additionalErrorMessage(additionalMessage) { }
-    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage, JsonDocument doc) : errorCode(code), additionalErrorMessage(additionalMessage), responseData(doc) { }
+    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage) : errorCode(code), _additionalErrorMessage(additionalMessage) { }
+    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage, JsonDocument doc) : errorCode(code), _additionalErrorMessage(additionalMessage), responseData(doc) { }
     DiscordESPResponse(DiscordESPResponseCode code) : errorCode(code) { }
     
     const char* GetLastError()
     {
-        if (!additionalErrorMessage.isEmpty())
-            return additionalErrorMessage.c_str();
+        if (!_additionalErrorMessage.isEmpty())
+            return _additionalErrorMessage.c_str();
         switch (errorCode)
         {
             case DiscordESPResponseCode::HttpConnectionFailed:
@@ -141,5 +141,5 @@ public:
 
 private:
     uint32_t _innerErrorCode;
-    String additionalErrorMessage;
+    String _additionalErrorMessage;
 };
