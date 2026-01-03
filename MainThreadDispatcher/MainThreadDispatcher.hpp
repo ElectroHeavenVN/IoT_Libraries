@@ -28,6 +28,7 @@ public:
                 continue;
             }
             it->func();
+            yield();
             // remove it from original tasks list
             auto originalIt = std::find_if(_tasks().begin(), _tasks().end(), [it](const DelayedTask &task) { return task.scheduledTime == it->scheduledTime && task.delayMs == it->delayMs; });
             if (originalIt != _tasks().end())
