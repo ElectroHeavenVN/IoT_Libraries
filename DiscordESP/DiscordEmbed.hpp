@@ -31,11 +31,11 @@ public:
     JsonDocument ToJsonDocument() const
     {
         JsonDocument doc;
-        doc["text"] = _text;
+        doc[F("text")] = _text;
         if (_iconUrl.has_value())
-            doc["icon_url"] = _iconUrl.value();
+            doc[F("icon_url")] = _iconUrl.value();
         if (_proxyIconUrl.has_value())
-            doc["proxy_icon_url"] = _proxyIconUrl.value();
+            doc[F("proxy_icon_url")] = _proxyIconUrl.value();
         return doc;
     }
 
@@ -75,13 +75,13 @@ public:
     JsonDocument ToJsonDocument() const
     {
         JsonDocument doc;
-        doc["url"] = _url;
+        doc[F("url")] = _url;
         if (_proxyUrl.has_value())
-            doc["proxy_url"] = _proxyUrl.value();
+            doc[F("proxy_url")] = _proxyUrl.value();
         if (_height.has_value())
-            doc["height"] = _height.value();
+            doc[F("height")] = _height.value();
         if (_width.has_value())
-            doc["width"] = _width.value();
+            doc[F("width")] = _width.value();
         return doc;
     }
 
@@ -111,9 +111,9 @@ public:
     {
         JsonDocument doc;
         if (_name.has_value())
-            doc["name"] = _name.value();
+            doc[F("name")] = _name.value();
         if (_url.has_value())
-            doc["url"] = _url.value();
+            doc[F("url")] = _url.value();
         return doc;
     }
 
@@ -180,9 +180,9 @@ public:
     JsonDocument ToJsonDocument() const
     {
         JsonDocument doc;
-        doc["name"] = _name;
-        doc["value"] = _value;
-        doc["inline"] = _inline;
+        doc[F("name")] = _name;
+        doc[F("value")] = _value;
+        doc[F("inline")] = _inline;
         return doc;
     }
 
@@ -283,28 +283,28 @@ public:
     {
         JsonDocument doc;
         if (_title.has_value())
-            doc["title"] = _title.value();
+            doc[F("title")] = _title.value();
         if (_description.has_value())
-            doc["description"] = _description.value();
+            doc[F("description")] = _description.value();
         if (_url.has_value())
-            doc["url"] = _url.value();
+            doc[F("url")] = _url.value();
         if (_timestamp.has_value())
-            doc["timestamp"] = _timestamp.value();
+            doc[F("timestamp")] = _timestamp.value();
         if (_color.has_value())
-            doc["color"] = _color.value();
+            doc[F("color")] = _color.value();
         if (_footer.has_value())
-            doc["footer"] = _footer.value().ToJsonDocument();
+            doc[F("footer")] = _footer.value().ToJsonDocument();
         if (_image.has_value())
-            doc["image"] = _image.value().ToJsonDocument();
+            doc[F("image")] = _image.value().ToJsonDocument();
         if (_thumbnail.has_value())
-            doc["thumbnail"] = _thumbnail.value().ToJsonDocument();
+            doc[F("thumbnail")] = _thumbnail.value().ToJsonDocument();
         if (_video.has_value())
-            doc["video"] = _video.value().ToJsonDocument();
+            doc[F("video")] = _video.value().ToJsonDocument();
         if (_provider.has_value())
-            doc["provider"] = _provider.value().ToJsonDocument();
+            doc[F("provider")] = _provider.value().ToJsonDocument();
         if (!_fields.empty())
         {
-            JsonArray fieldsArray = doc["fields"].to<JsonArray>();
+            JsonArray fieldsArray = doc[F("fields")].to<JsonArray>();
             for (const auto &field : _fields)
                 fieldsArray.add(field.ToJsonDocument());
         }

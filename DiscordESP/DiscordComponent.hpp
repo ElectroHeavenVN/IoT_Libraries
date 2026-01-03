@@ -53,9 +53,9 @@ public:
     virtual JsonDocument ToJsonDocument() const
     {
         JsonDocument doc;
-        doc["type"] = static_cast<uint32_t>(_type);
+        doc[F("type")] = static_cast<uint32_t>(_type);
         if (_id.has_value())
-            doc["id"] = _id.value();
+            doc[F("id")] = _id.value();
         return doc;
     }
 
@@ -154,18 +154,18 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        doc["style"] = static_cast<uint32_t>(_style);
+        doc[F("style")] = static_cast<uint32_t>(_style);
         if (_label.has_value())
-            doc["label"] = _label.value();
+            doc[F("label")] = _label.value();
         if (_emoji.has_value())
-            doc["emoji"] = _emoji.value().ToJsonDocument();
-        doc["disabled"] = _disabled;
+            doc[F("emoji")] = _emoji.value().ToJsonDocument();
+        doc[F("disabled")] = _disabled;
         if (_style == DiscordButtonStyle::Link && _url.has_value())
-            doc["url"] = _url.value();
+            doc[F("url")] = _url.value();
         else
         {
             if (_customId.length() > 0)
-                doc["custom_id"] = _customId;
+                doc[F("custom_id")] = _customId;
         }
         return doc;
     }
@@ -221,7 +221,7 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        JsonArray componentsArray = doc["components"].to<JsonArray>();
+        JsonArray componentsArray = doc[F("components")].to<JsonArray>();
         for (const auto &component : _components)
             componentsArray.add(component->ToJsonDocument());
         return doc;
@@ -303,11 +303,11 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        JsonArray componentsArray = doc["components"].to<JsonArray>();
+        JsonArray componentsArray = doc[F("components")].to<JsonArray>();
         for (const auto &component : _components)
             componentsArray.add(component->ToJsonDocument());
         if (_accessory)
-            doc["accessory"] = _accessory->ToJsonDocument();
+            doc[F("accessory")] = _accessory->ToJsonDocument();
         return doc;
     }
 
@@ -347,7 +347,7 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        doc["content"] = _content;
+        doc[F("content")] = _content;
         return doc;
     }
 
@@ -394,10 +394,10 @@ public:
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
         if (_description.has_value())
-            doc["description"] = _description.value();
+            doc[F("description")] = _description.value();
         if (_spoiler.has_value())
-            doc["spoiler"] = _spoiler.value();
-        doc["media"] = _media.ToJsonDocument();
+            doc[F("spoiler")] = _spoiler.value();
+        doc[F("media")] = _media.ToJsonDocument();
         return doc;
     }
 
@@ -446,7 +446,7 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        JsonArray mediaArray = doc["items"].to<JsonArray>();
+        JsonArray mediaArray = doc[F("items")].to<JsonArray>();
         for (auto &item : _mediaItems)
             mediaArray.add(item.ToJsonDocument());
         return doc;
@@ -482,9 +482,9 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        doc["file"] = _file.ToJsonDocument();
+        doc[F("file")] = _file.ToJsonDocument();
         if (_spoiler.has_value())
-            doc["spoiler"] = _spoiler.value();
+            doc[F("spoiler")] = _spoiler.value();
         return doc;
     }
 
@@ -529,9 +529,9 @@ public:
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
         if (_divider.has_value())
-            doc["divider"] = _divider.value();
+            doc[F("divider")] = _divider.value();
         if (_spacing.has_value())
-            doc["spacing"] = _spacing.value();
+            doc[F("spacing")] = _spacing.value();
         return doc;
     }
 
@@ -609,13 +609,13 @@ public:
     JsonDocument ToJsonDocument() const override
     {
         JsonDocument doc = DiscordComponent::ToJsonDocument();
-        JsonArray componentsArray = doc["components"].to<JsonArray>();
+        JsonArray componentsArray = doc[F("components")].to<JsonArray>();
         for (const auto &component : _components)
             componentsArray.add(component->ToJsonDocument());
         if (_accentColor.has_value())
-            doc["accent_color"] = _accentColor.value();
+            doc[F("accent_color")] = _accentColor.value();
         if (_spoiler.has_value())
-            doc["spoiler"] = _spoiler.value();
+            doc[F("spoiler")] = _spoiler.value();
         return doc;
     }
 

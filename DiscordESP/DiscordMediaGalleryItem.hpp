@@ -31,9 +31,9 @@ public:
     {
         JsonDocument doc;
         if (_description.has_value())
-            doc["description"] = _description.value();
-        doc["spoiler"] = _spoiler;
-        doc["media"] = _media.ToJsonDocument();
+            doc[F("description")] = _description.value();
+        doc[F("spoiler")] = _spoiler;
+        doc[F("media")] = _media.ToJsonDocument();
         return doc;
     }
 

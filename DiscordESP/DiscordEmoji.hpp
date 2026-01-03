@@ -35,10 +35,10 @@ public:
         JsonDocument doc;
         if (_id != 0)
         {
-            doc["id"] = String(_id);
-            doc["animated"] = _animated;
+            doc[F("id")] = String(_id);
+            doc[F("animated")] = _animated;
         }
-        doc["name"] = _name;
+        doc[F("name")] = _name;
         return doc;
     }
 

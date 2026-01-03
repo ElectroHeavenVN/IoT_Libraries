@@ -41,27 +41,27 @@ public:
         switch (_type)
         {
         case DiscordMentionType::Users:
-            doc["parse"].add("users");
+            doc[F("parse")].add(F("users"));
             break;
         case DiscordMentionType::Roles:
-            doc["parse"].add("roles");
+            doc[F("parse")].add(F("roles"));
             break;
         case DiscordMentionType::Everyone:
-            doc["parse"].add("everyone");
+            doc[F("parse")].add(F("everyone"));
             break;
         case DiscordMentionType::NoMention:
-            doc["parse"].to<JsonArray>();
+            doc[F("parse")].to<JsonArray>();
             break;
         }
         if (!_userIds.empty())
         {
-            JsonArray usersArray = doc["users"].to<JsonArray>();
+            JsonArray usersArray = doc[F("users")].to<JsonArray>();
             for (String userId : _userIds)
                 usersArray.add(userId);
         }
         if (!_roleIds.empty())
         {
-            JsonArray rolesArray = doc["roles"].to<JsonArray>();
+            JsonArray rolesArray = doc[F("roles")].to<JsonArray>();
             for (String roleId : _roleIds)
                 rolesArray.add(roleId);
         }
