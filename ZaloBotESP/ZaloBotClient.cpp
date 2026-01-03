@@ -1,7 +1,9 @@
 #include "ZaloBotClient.hpp"
 #include <StreamUtils.hpp>
 
-const char ZAPPS_ME_CA[] PROGMEM = R"(
+#define BASE_ZALO_BOT_API_URL "https://bot-api.zapps.me/bot"
+
+const char ZALOPLATFORMS_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
 MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
@@ -28,10 +30,10 @@ MrY=
 ZaloBotClient::ZaloBotClient(String botToken) : _botToken(botToken)
 {
 #if defined(ESP8266)
-    _wifiClient.setTrustAnchors(new BearSSL::X509List(ZAPPS_ME_CA));
+    _wifiClient.setTrustAnchors(new BearSSL::X509List(ZALOPLATFORMS_COM_CA));
     _wifiClient.setBufferSizes(1024, 1024);
 #elif defined(ESP32)
-    _wifiClient.setCACert(ZAPPS_ME_CA);
+    _wifiClient.setCACert(ZALOPLATFORMS_COM_CA);
 #endif
     _httpClient.setTimeout(5000);
     _asyncHttpClient.setTimeout(60000); // DON'T KNOW WHY BUT IT WORKS
@@ -43,7 +45,7 @@ ZaloBotESPResponse ZaloBotClient::_httpGet(const char* endpoint)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     _cancelPolling();
     char url[256];
-    snprintf(url, sizeof(url), "https://bot-api.zapps.me/bot%s/%s", _botToken.c_str(), endpoint);
+    snprintf(url, sizeof(url), BASE_ZALO_BOT_API_URL "%s/%s", _botToken.c_str(), endpoint);
     BC_DEBUG("GET %s\n", url);
     if (!_httpClient.begin(_wifiClient, url))
         return ZaloBotESPResponse(ZaloBotESPResponseCode::HttpConnectionFailed);
@@ -115,7 +117,7 @@ ZaloBotESPResponse ZaloBotClient::_httpPost(const char* endpoint, const char *ke
     char body[3072] = {0};  // message size limit is 2000 chars
     _buildFormBody(body, keys, values, count);
     char url[256];
-    snprintf(url, sizeof(url), "https://bot-api.zapps.me/bot%s/%s", _botToken.c_str(), endpoint);
+    snprintf(url, sizeof(url), BASE_ZALO_BOT_API_URL "%s/%s", _botToken.c_str(), endpoint);
     BC_DEBUG("POST %s -> %s\n", url, body);
     if (!_httpClient.begin(_wifiClient, url))
         return ZaloBotESPResponse(ZaloBotESPResponseCode::HttpConnectionFailed);
@@ -198,7 +200,7 @@ void ZaloBotClient::_httpGetAsync(const char* endpoint)
 	if (WiFi.status() != WL_CONNECTED)
 		return;
     char url[256];
-    snprintf(url, sizeof(url), "https://bot-api.zapps.me/bot%s/%s", _botToken.c_str(), endpoint);
+    snprintf(url, sizeof(url), BASE_ZALO_BOT_API_URL "%s/%s", _botToken.c_str(), endpoint);
     BC_DEBUG("Async GET: %s\n", url);
     _asyncHttpClient.begin(_wifiClient, url);
     _asyncHttpClient.sendGetAsync();
