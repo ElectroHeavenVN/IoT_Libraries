@@ -83,11 +83,13 @@ DiscordESPResponse DiscordESP::Bot::AddReaction(const char *token, const char *c
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
 
     char encodedEmoji[64] = {0};
-    strcpy(encodedEmoji, emoji);
     if (strchr(emoji, ':') == nullptr)
         _urlEncode(emoji, encodedEmoji);
+    else 
+        strcpy(encodedEmoji, emoji);
     char url[256];
     snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages/%s/reactions/%s/@me", channelId, messageId, encodedEmoji);
+    Serial.println(url);
     return _sendRequest(token, url, "PUT", JsonDocument());
 }
 
