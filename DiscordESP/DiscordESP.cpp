@@ -23,178 +23,282 @@ WiFiClientSecure DiscordESP::_wifiClient;
 HTTPClient DiscordESP::_httpClient;
 std::optional<DeserializationOption::Filter> DiscordESP::_currentFilter = std::nullopt;
 
-DiscordESPResponse DiscordESP::Bot::SendMessage(String token, String channelId, String content)
+DiscordESPResponse DiscordESP::Bot::SendMessage(const char *token, const char *channelId, const char *content)
 {
-    if (token.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Token is empty.");
-    if (channelId.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Channel ID is empty.");
-    if (content.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Content is empty.");
+    if (token == nullptr || strlen(token) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 1);
+    if (channelId == nullptr || strlen(channelId) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 2);
+    if (content == nullptr || strlen(content) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 3);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
-    if (content.length() > 2000)
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Content exceeds 2000 characters.");
+    if (strlen(content) > 2000)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 4);
 
     JsonDocument doc;
-    doc["content"] = content;
+    doc[F("content")] = content;
     char url[256];
-    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId.c_str());
-    return _sendRequest(token, String(url), "POST", doc);
+    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId);
+    return _sendRequest(token, url, "POST", doc);
 }
 
-DiscordESPResponse DiscordESP::Bot::SendMessage(String token, String channelId, DiscordMessageBuilder &builder)
+DiscordESPResponse DiscordESP::Bot::SendMessage(const char *token, const char *channelId, DiscordMessageBuilder &builder)
 {
-    if (token.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Token is empty.");
-    if (channelId.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Channel ID is empty.");
+    if (token == nullptr || strlen(token) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 1);
+    if (channelId == nullptr || strlen(channelId) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 2);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
     if (builder.IsComponentV2())
     {
         if (builder.GetComponents().empty())
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 but has no components.");
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 5);
         if (!builder.GetEmbeds().empty() || builder.GetContent().has_value())
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 can only contain components.");
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 6);
     }
     else
     {
         if (builder.GetEmbeds().size() > 10)
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Cannot have more than 10 embeds in a message.");
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 7);
     }
     JsonDocument doc = _build(builder, false);
     char url[256];
-    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId.c_str());
-    return _sendRequest(token, String(url), "POST", doc);
+    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages", channelId);
+    return _sendRequest(token, url, "POST", doc);
 }
 
-DiscordESPResponse DiscordESP::Bot::AddReaction(String token, String channelId, String messageId, String emoji)
+DiscordESPResponse DiscordESP::Bot::AddReaction(const char *token, const char *channelId, const char *messageId, const char *emoji)
 {
-    if (token.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Token is empty.");
-    if (channelId.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Channel ID is empty.");
-    if (messageId.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message ID is empty.");
-    if (emoji.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Emoji is empty.");
+    if (token == nullptr || strlen(token) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 1);
+    if (channelId == nullptr || strlen(channelId) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 2);
+    if (messageId == nullptr || strlen(messageId) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 8);
+    if (emoji == nullptr || strlen(emoji) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 9);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
 
-    String encodedEmoji = emoji;
-    if (emoji.indexOf(':') == -1)
-        encodedEmoji = _urlEncode(emoji);
+    char encodedEmoji[64] = {0};
+    strcpy(encodedEmoji, emoji);
+    if (strchr(emoji, ':') == nullptr)
+        _urlEncode(emoji, encodedEmoji);
     char url[256];
-    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages/%s/reactions/%s/@me", channelId.c_str(), messageId.c_str(), encodedEmoji.c_str());
-    return _sendRequest(token, String(url), "PUT", JsonDocument());
+    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages/%s/reactions/%s/@me", channelId, messageId, encodedEmoji);
+    return _sendRequest(token, url, "PUT", JsonDocument());
 }
 
-DiscordESPResponse DiscordESP::Bot::GetMessages(String token, String channelId, String around, String before, String after, int limit)
+DiscordESPResponse DiscordESP::Bot::GetMessages(const char *token, const char *channelId, const char *around, const char *before, const char *after, int limit)
 {
-    if (token.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Token is empty.");
-    if (channelId.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Channel ID is empty.");
+    if (token == nullptr || strlen(token) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 1);
+    if (channelId == nullptr || strlen(channelId) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 2);
     if (limit < 1 || limit > 100)
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Limit must be between 1 and 100.");
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 10);
+    int count = 0;
+    if (around != nullptr && strlen(around) > 0)
+        count++;
+    if (before != nullptr && strlen(before) > 0)
+        count++;
+    if (after != nullptr && strlen(after) > 0)
+        count++;
+    if (count > 1)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 11);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
-
-    String url = BASE_DISCORD_API_URL "channels/" + channelId + "/messages?";
-    if (!around.isEmpty())
-        url += "around=" + around + "&";
-    if (!before.isEmpty())
-        url += "before=" + before + "&";
-    if (!after.isEmpty())
-        url += "after=" + after + "&";
-    url += "limit=" + String(limit);
+    char url[256];
+    snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages?", channelId);
+    if (around != nullptr && strlen(around) > 0)
+    {
+        strcat(url, "around=");
+        strcat(url, around);
+        strcat(url, "&");
+    }
+    else if (before != nullptr && strlen(before) > 0)
+    {
+        strcat(url, "before=");
+        strcat(url, before);
+        strcat(url, "&");
+    }
+    else if (after != nullptr && strlen(after) > 0)
+    {
+        strcat(url, "after=");
+        strcat(url, after);
+        strcat(url, "&");
+    }
+    strcat(url, "limit=");
+    char limitStr[4];
+    snprintf(limitStr, sizeof(limitStr), "%d", limit);
+    strcat(url, limitStr);
     return _sendRequest(token, url, "GET", JsonDocument());
 }
 
 // Add thread id to the webhook url as ?thread_id=THREAD_ID to send message to a thread
 // Pass threadName to create a new thread with that name
-DiscordESPResponse DiscordESP::Webhook::SendMessage(String webhookUrl, DiscordMessageBuilder &builder, String threadName, vector<uint64_t> tagIDs)
+DiscordESPResponse DiscordESP::Webhook::SendMessage(const char *webhookUrl, DiscordMessageBuilder &builder, const char *threadName, vector<uint64_t> tagIDs)
 {
-    if (webhookUrl.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Webhook URL is empty.");
+    if (webhookUrl == nullptr || strlen(webhookUrl) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 12);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
-    if (!webhookUrl.endsWith("wait=true"))
-    {
-        if (webhookUrl.indexOf('?') == -1)
-            webhookUrl += "?wait=true";
-        else
-            webhookUrl += "&wait=true";
-    }
     if (builder.IsComponentV2())
     {
         if (builder.GetComponents().empty())
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 but has no components.");
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 5);
         if (!builder.GetEmbeds().empty() || builder.GetContent().has_value())
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Message marked as ComponentV2 can only contain components.");
-        webhookUrl += "&with_components=true";
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 6);
     }
     else
     {
         if (builder.GetEmbeds().size() > 10)
-            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Cannot have more than 10 embeds in a message.");
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 7);
     }
-    JsonDocument doc = _build(builder, true);
-    if (!threadName.isEmpty())
+    char webhookUrlBuffer[256];
+    strncpy(webhookUrlBuffer, webhookUrl, sizeof(webhookUrlBuffer) - 1);
+    webhookUrlBuffer[sizeof(webhookUrlBuffer) - 1] = '\0';
+    if (strstr(webhookUrl, "wait=true") == nullptr)
     {
-        doc["thread_name"] = threadName;
-        JsonArray tagIDsArray = doc["applied_tags"].to<JsonArray>();
+        if (strchr(webhookUrl, '?') == nullptr)
+            strcat(webhookUrlBuffer, "?wait=true");
+        else
+            strcat(webhookUrlBuffer, "&wait=true");
+    }
+    if (builder.IsComponentV2())
+        strcat(webhookUrlBuffer, "&with_components=true");
+    JsonDocument doc = _build(builder, true);
+    if (threadName != nullptr && strlen(threadName) > 0)
+    {
+        doc[F("thread_name")] = threadName;
+        JsonArray tagIDsArray = doc[F("applied_tags")].to<JsonArray>();
         for (const uint64_t &tagID : tagIDs)
             tagIDsArray.add(tagID);
     }
-    return _sendRequest("", webhookUrl, "POST", doc);
+    return _sendRequest("", webhookUrlBuffer, "POST", doc);
 }
 
-DiscordESPResponse DiscordESP::Webhook::SendMessage(String webhookUrl, String content, String username, String avatarUrl, String threadName, vector<uint64_t> tagIDs)
+// Add thread id to the webhook url as ?thread_id=THREAD_ID to send message to a thread
+// Pass threadName to create a new thread with that name
+DiscordESPResponse DiscordESP::Webhook::SendMessageNoWait(const char *webhookUrl, DiscordMessageBuilder &builder, const char *threadName, vector<uint64_t> tagIDs)
 {
-    if (webhookUrl.isEmpty())
-        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, "Webhook URL is empty.");
+    if (webhookUrl == nullptr || strlen(webhookUrl) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 12);
+    if (WiFi.status() != WL_CONNECTED)
+        return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
+    if (builder.IsComponentV2())
+    {
+        if (builder.GetComponents().empty())
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 5);
+        if (!builder.GetEmbeds().empty() || builder.GetContent().has_value())
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 6);
+    }
+    else
+    {
+        if (builder.GetEmbeds().size() > 10)
+            return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 7);
+    }
+
+    char webhookUrlBuffer[256];
+    strncpy(webhookUrlBuffer, webhookUrl, sizeof(webhookUrlBuffer) - 1);
+    webhookUrlBuffer[sizeof(webhookUrlBuffer) - 1] = '\0';
+    if (builder.IsComponentV2()) 
+    {
+        if (strchr(webhookUrl, '?') == nullptr)
+            strcat(webhookUrlBuffer, "?with_components=true");
+        else
+            strcat(webhookUrlBuffer, "&with_components=true");
+    }
+    JsonDocument doc = _build(builder, true);
+    if (threadName != nullptr && strlen(threadName) > 0)
+    {
+        doc[F("thread_name")] = threadName;
+        JsonArray tagIDsArray = doc[F("applied_tags")].to<JsonArray>();
+        for (const uint64_t &tagID : tagIDs)
+            tagIDsArray.add(tagID);
+    }
+    return _sendRequest("", webhookUrlBuffer, "POST", doc);
+}
+
+DiscordESPResponse DiscordESP::Webhook::SendMessage(const char *webhookUrl, const char *content, const char *username, const char *avatarUrl, const char *threadName, vector<uint64_t> tagIDs)
+{
+    if (webhookUrl == nullptr || strlen(webhookUrl) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 12);
+    if (content == nullptr || strlen(content) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 3);
+    if (WiFi.status() != WL_CONNECTED)
+        return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
+    char webhookUrlBuffer[256];
+    strncpy(webhookUrlBuffer, webhookUrl, sizeof(webhookUrlBuffer) - 1);
+    webhookUrlBuffer[sizeof(webhookUrlBuffer) - 1] = '\0';
+    if (strstr(webhookUrl, "wait=true") == nullptr)
+    {
+        if (strchr(webhookUrl, '?') == nullptr)
+            strcat(webhookUrlBuffer, "?wait=true");
+        else
+            strcat(webhookUrlBuffer, "&wait=true");
+    }
+    JsonDocument doc;
+    doc[F("content")] = content;
+    if (username != nullptr && strlen(username) > 0)
+        doc[F("username")] = username;
+    if (avatarUrl != nullptr && strlen(avatarUrl) > 0)
+        doc[F("avatar_url")] = avatarUrl;
+    if (threadName != nullptr && strlen(threadName) > 0)
+    {
+        doc[F("thread_name")] = threadName;
+        JsonArray tagIDsArray = doc[F("applied_tags")].to<JsonArray>();
+        for (const uint64_t &tagID : tagIDs)
+            tagIDsArray.add(tagID);
+    }
+    return _sendRequest("", webhookUrlBuffer, "POST", doc);
+}
+
+DiscordESPResponse DiscordESP::Webhook::SendMessageNoWait(const char *webhookUrl, const char *content, const char *username, const char *avatarUrl, const char *threadName, vector<uint64_t> tagIDs)
+{
+    if (webhookUrl == nullptr || strlen(webhookUrl) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 12);
+    if (content == nullptr || strlen(content) == 0)
+        return DiscordESPResponse(DiscordESPResponseCode::InvalidParameter, 3);
     if (WiFi.status() != WL_CONNECTED)
         return DiscordESPResponse(DiscordESPResponseCode::WifiNotConnected);
     JsonDocument doc;
-    doc["content"] = content;
-    if (username != "")
-        doc["username"] = username;
-    if (avatarUrl != "")
-        doc["avatar_url"] = avatarUrl;
-    if (!threadName.isEmpty())
+    doc[F("content")] = content;
+    if (username != nullptr && strlen(username) > 0)
+        doc[F("username")] = username;
+    if (avatarUrl != nullptr && strlen(avatarUrl) > 0)
+        doc[F("avatar_url")] = avatarUrl;
+    if (threadName != nullptr && strlen(threadName) > 0)
     {
-        doc["thread_name"] = threadName;
-        JsonArray tagIDsArray = doc["applied_tags"].to<JsonArray>();
+        doc[F("thread_name")] = threadName;
+        JsonArray tagIDsArray = doc[F("applied_tags")].to<JsonArray>();
         for (const uint64_t &tagID : tagIDs)
             tagIDsArray.add(tagID);
-    }
-    if (!webhookUrl.endsWith("wait=true"))
-    {
-        if (webhookUrl.indexOf('?') == -1)
-            webhookUrl += "?wait=true";
-        else
-            webhookUrl += "&wait=true";
     }
     return _sendRequest("", webhookUrl, "POST", doc);
 }
 
 // ---------------------------------------------------------------
 
-DiscordESPResponse DiscordESP::_sendRequest(String token, String url, String method, JsonDocument doc)
+DiscordESPResponse DiscordESP::_sendRequest(const char *token, const char *url, const char *method, JsonDocument doc)
 {
     if (!_httpClient.begin(_wifiClient, url))
         return DiscordESPResponse(DiscordESPResponseCode::HttpConnectionFailed);
-    if (!token.isEmpty())
-        _httpClient.addHeader("Authorization", "Bot " + token);
+    if (token != nullptr && strlen(token) > 0) 
+    {
+        char authHeader[128];
+        snprintf(authHeader, sizeof(authHeader), "Bot %s", token);
+        _httpClient.addHeader("Authorization", authHeader);
+    }
     _httpClient.addHeader("Content-Type", "application/json");
     const char *keys[] = {"Transfer-Encoding"};
     _httpClient.collectHeaders(keys, 1);
     String jsonString;
     if (!doc.isNull())
         serializeJson(doc, jsonString);
-    int httpResponseCode = _httpClient.sendRequest(method.c_str(), jsonString);
+    int httpResponseCode = _httpClient.sendRequest(method, jsonString);
     JsonDocument responseDoc;
     if (httpResponseCode < 0)
     {
@@ -224,9 +328,15 @@ DiscordESPResponse DiscordESP::_sendRequest(String token, String url, String met
     }
     _httpClient.end();
     if (error.code() != 0)
-        return DiscordESPResponse(DiscordESPResponseCode::JsonDeserializationFailed, "JSON deserialization failed: " + String(error.c_str()) + " (" + String(error.code()) + ")");
+    {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "JSON deserialization failed: %s (%d)", error.c_str(), error.code());
+        return DiscordESPResponse(DiscordESPResponseCode::JsonDeserializationFailed, String(buffer));
+    }
     if (httpResponseCode == 200 || httpResponseCode == 201)
         return DiscordESPResponse(responseDoc);
+    if (httpResponseCode == 204)
+        return DiscordESPResponse(DiscordESPResponseCode::NoContent);
     if (httpResponseCode == 400)
         return DiscordESPResponse(DiscordESPResponseCode::BadRequest, responseDoc);
     if (httpResponseCode == 401)
@@ -257,26 +367,26 @@ JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
         flags |= static_cast<uint64_t>(DiscordMessageFlags::IsComponentV2);
     if (builder.IsVoiceMessage() && !forWebhook)
         flags |= static_cast<uint64_t>(DiscordMessageFlags::IsVoiceMessage);
-    doc["flags"] = flags;
+    doc[F("flags")] = flags;
     if (builder.GetContent().has_value())
-        doc["content"] = builder.GetContent().value();
+        doc[F("content")] = builder.GetContent().value();
     if (builder.GetUsername().has_value())
-        doc["username"] = builder.GetUsername().value();
+        doc[F("username")] = builder.GetUsername().value();
     if (builder.GetAvatarUrl().has_value())
-        doc["avatar_url"] = builder.GetAvatarUrl().value();
+        doc[F("avatar_url")] = builder.GetAvatarUrl().value();
     if (builder.IsTTS())
-        doc["tts"] = true;
+        doc[F("tts")] = true;
     if (builder.GetAllowedMentions().has_value())
-        doc["allowed_mentions"] = builder.GetAllowedMentions().value().ToJsonDocument();
+        doc[F("allowed_mentions")] = builder.GetAllowedMentions().value().ToJsonDocument();
     if (!embeds.empty())
     {
-        JsonArray embedsArray = doc["embeds"].to<JsonArray>();
+        JsonArray embedsArray = doc[F("embeds")].to<JsonArray>();
         for (auto &embed : embeds)
             embedsArray.add(embed.ToJsonDocument());
     }
     if (!components.empty())
     {
-        JsonArray componentsArray = doc["components"].to<JsonArray>();
+        JsonArray componentsArray = doc[F("components")].to<JsonArray>();
         for (const auto &component : components)
         {
             if (forWebhook && component->GetType() == DiscordComponentType::Button)
@@ -291,22 +401,20 @@ JsonDocument DiscordESP::_build(DiscordMessageBuilder &builder, bool forWebhook)
     return doc;
 }
 
-String DiscordESP::_urlEncode(String str)
+void DiscordESP::_urlEncode(const char *str, char *buffer)
 {
-    String encodedString = "";
     char buf[4];
-    for (size_t i = 0; i < str.length(); i++)
+    for (size_t i = 0; i < strlen(str); i++)
     {
-        char c = str.charAt(i);
+        char c = str[i];
         if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
-            encodedString += c;
+            strncat(buffer, &c, 1);
         else
         {
             snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
-            encodedString += buf;
+            strncat(buffer, buf, sizeof(buf) - 1);
         }
     }
-    return encodedString;
 }
 
 void DiscordESP::SetupClient()

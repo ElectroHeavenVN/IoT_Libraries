@@ -40,95 +40,106 @@ struct DiscordESPResponse
 {
 public:
     DiscordESPResponseCode errorCode;
-    String errorMessage = "Success";
     JsonDocument responseData;
-
-    DiscordESPResponse(JsonDocument doc) : errorCode(DiscordESPResponseCode::Success), responseData(doc) {}
-    DiscordESPResponse(DiscordESPResponseCode code, JsonDocument doc) : errorCode(code), responseData(doc) { setErrorMessageFromCode(code); }
-    DiscordESPResponse(DiscordESPResponseCode code, String message) : errorCode(code), errorMessage(message) {}
-    DiscordESPResponse(DiscordESPResponseCode code, String message, JsonDocument doc) : errorCode(code), errorMessage(message), responseData(doc) {}
-    DiscordESPResponse(DiscordESPResponseCode code) : errorCode(code) { setErrorMessageFromCode(code); }
-
-private:
-    void setErrorMessageFromCode(DiscordESPResponseCode code)
+    
+    DiscordESPResponse(JsonDocument doc) : errorCode(DiscordESPResponseCode::Success), responseData(doc) { }
+    DiscordESPResponse(DiscordESPResponseCode code, JsonDocument doc) : errorCode(code), responseData(doc) { }
+    DiscordESPResponse(DiscordESPResponseCode code, uint32_t innerErrorCode) : errorCode(code), _innerErrorCode(innerErrorCode) { }
+    DiscordESPResponse(DiscordESPResponseCode code, uint32_t innerErrorCode, JsonDocument doc) : errorCode(code), _innerErrorCode(innerErrorCode), responseData(doc) { }
+    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage) : errorCode(code), additionalErrorMessage(additionalMessage) { }
+    DiscordESPResponse(DiscordESPResponseCode code, String additionalMessage, JsonDocument doc) : errorCode(code), additionalErrorMessage(additionalMessage), responseData(doc) { }
+    DiscordESPResponse(DiscordESPResponseCode code) : errorCode(code) { }
+    
+    const char* GetLastError()
     {
-        switch (code)
+        if (!additionalErrorMessage.isEmpty())
+            return additionalErrorMessage.c_str();
+        switch (errorCode)
         {
-        case DiscordESPResponseCode::HttpConnectionFailed:
-            errorMessage = "Connection failed";
-            break;
-        case DiscordESPResponseCode::HttpSendHeaderFailed:
-            errorMessage = "Send header failed";
-            break;
-        case DiscordESPResponseCode::HttpSendPayloadFailed:
-            errorMessage = "Send payload failed";
-            break;
-        case DiscordESPResponseCode::HttpNotConnected:
-            errorMessage = "Not connected";
-            break;
-        case DiscordESPResponseCode::HttpConnectionLost:
-            errorMessage = "Connection lost";
-            break;
-        case DiscordESPResponseCode::HttpNoRespStream:
-            errorMessage = "No response stream";
-            break;
-        case DiscordESPResponseCode::HttpNotAHttpServer:
-            errorMessage = "Not a HTTP server";
-            break;
-        case DiscordESPResponseCode::HttpNotEnoughRam:
-            errorMessage = "Not enough RAM";
-            break;
-        case DiscordESPResponseCode::HttpTransferEncodingNotSupported:
-            errorMessage = "Transfer-Encoding not supported";
-            break;
-        case DiscordESPResponseCode::HttpStreamWriteFailed:
-            errorMessage = "Stream write failed";
-            break;
-        case DiscordESPResponseCode::HttpReadTimeout:
-            errorMessage = "Read timeout";
-            break;
+            case DiscordESPResponseCode::HttpConnectionFailed:
+                return "Connection failed";
+            case DiscordESPResponseCode::HttpSendHeaderFailed:
+                return "Send header failed";
+            case DiscordESPResponseCode::HttpSendPayloadFailed:
+                return "Send payload failed";
+            case DiscordESPResponseCode::HttpNotConnected:
+                return "Not connected";
+            case DiscordESPResponseCode::HttpConnectionLost:
+                return "Connection lost";
+            case DiscordESPResponseCode::HttpNoRespStream:
+                return "No response stream";
+            case DiscordESPResponseCode::HttpNotAHttpServer:
+                return "Not a HTTP server";
+            case DiscordESPResponseCode::HttpNotEnoughRam:
+                return "Not enough RAM";
+            case DiscordESPResponseCode::HttpTransferEncodingNotSupported:
+                return "Transfer-Encoding not supported";
+            case DiscordESPResponseCode::HttpStreamWriteFailed:
+                return "Stream write failed";
+            case DiscordESPResponseCode::HttpReadTimeout:
+                return "Read timeout";
 
-        case DiscordESPResponseCode::Success:
-            errorMessage = "Success";
-            break;
-        case DiscordESPResponseCode::InvalidParameter:
-            errorMessage = "Invalid parameter";
-            break;
-        case DiscordESPResponseCode::WifiNotConnected:
-            errorMessage = "WiFi not connected";
-            break;
-        case DiscordESPResponseCode::InvalidResponse:
-            errorMessage = "Invalid response from server";
-            break;
-        case DiscordESPResponseCode::JsonDeserializationFailed:
-            errorMessage = "JSON deserialization failed";
-            break;
+            case DiscordESPResponseCode::Success:
+                return "Success";
+            case DiscordESPResponseCode::InvalidParameter:
+            {
+                switch (_innerErrorCode)
+                {
+                    case 1:
+                        return "Token is empty";
+                    case 2:
+                        return "Channel ID is empty";
+                    case 3:
+                        return "Content is empty";
+                    case 4:
+                        return "Content exceeds 2000 characters";
+                    case 5:
+                        return "Message marked as ComponentV2 but has no components";
+                    case 6:
+                        return "Message marked as ComponentV2 can only contain components";
+                    case 7:
+                        return "Cannot have more than 10 embeds in a message";
+                    case 8:
+                        return "Message ID is empty";
+                    case 9:
+                        return "Emoji is empty";
+                    case 10:
+                        return "Limit must be between 1 and 100";
+                    case 11:
+                        return "Only one of around, before, or after can be specified";
+                    case 12:
+                        return "Webhook URL is empty";
+                }
+                return "Invalid parameter";
+            }
+            case DiscordESPResponseCode::WifiNotConnected:
+                return "WiFi not connected";
+            case DiscordESPResponseCode::InvalidResponse:
+                return "Invalid response from server";
+            case DiscordESPResponseCode::JsonDeserializationFailed:
+                return "JSON deserialization failed";
 
-        case DiscordESPResponseCode::NoContent:
-            errorMessage = "No Content";
-            break;
-        case DiscordESPResponseCode::BadRequest:
-            errorMessage = "Bad request";
-            break;
-        case DiscordESPResponseCode::Unauthorized:
-            errorMessage = "Unauthorized";
-            break;
-        case DiscordESPResponseCode::Forbidden:
-            errorMessage = "Forbidden";
-            break;
-        case DiscordESPResponseCode::NotFound:
-            errorMessage = "Not found";
-            break;
-        case DiscordESPResponseCode::RequestTimeout:
-            errorMessage = "Request timeout";
-            break;
-        case DiscordESPResponseCode::RateLimitExceeded:
-            errorMessage = "Rate limit exceeded";
-            break;
+            case DiscordESPResponseCode::NoContent:
+                return "No Content";
+            case DiscordESPResponseCode::BadRequest:
+                return "Bad request";
+            case DiscordESPResponseCode::Unauthorized:
+                return "Unauthorized";
+            case DiscordESPResponseCode::Forbidden:
+                return "Forbidden";
+            case DiscordESPResponseCode::NotFound:
+                return "Not found";
+            case DiscordESPResponseCode::RequestTimeout:
+                return "Request timeout";
+            case DiscordESPResponseCode::RateLimitExceeded:
+                return "Rate limit exceeded";
 
-        default:
-            errorMessage = "Unknown error";
-            break;
+            default:
+                return "Unknown error";
         }
     }
+
+private:
+    uint32_t _innerErrorCode;
+    String additionalErrorMessage;
 };
