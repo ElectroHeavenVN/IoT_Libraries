@@ -89,7 +89,6 @@ DiscordESPResponse DiscordESP::Bot::AddReaction(const char *token, const char *c
         strcpy(encodedEmoji, emoji);
     char url[256];
     snprintf(url, sizeof(url), BASE_DISCORD_API_URL "channels/%s/messages/%s/reactions/%s/@me", channelId, messageId, encodedEmoji);
-    Serial.println(url);
     return _sendRequest(token, url, "PUT", JsonDocument());
 }
 
