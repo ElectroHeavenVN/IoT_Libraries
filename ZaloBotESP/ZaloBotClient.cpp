@@ -86,11 +86,12 @@ ZaloBotESPResponse ZaloBotClient::_httpGet(const char* endpoint)
         snprintf(buffer, sizeof(buffer), "JSON deserialization failed: %s (%d)", error.c_str(), error.code());
         return ZaloBotESPResponse(ZaloBotESPResponseCode::JsonDeserializationFailed, String(buffer));
     }
-    BC_DEBUG("Response code: %d\n", httpResponseCode);
 #if defined(DEBUG_BOTCLIENT)
+    BC_DEBUG("Response code: %d\n", httpResponseCode);
     serializeJson(responseDoc, DEBUG_BOTCLIENT);
+    BC_DEBUG("\n");
 #endif
-    if (httpResponseCode == 200 || httpResponseCode == 201)
+    if (httpResponseCode == 200 || httpResponseCode == 201 || httpResponseCode == 0)
         return ZaloBotESPResponse(responseDoc);
     if (httpResponseCode == 204)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::NoContent);
@@ -163,11 +164,12 @@ ZaloBotESPResponse ZaloBotClient::_httpPost(const char* endpoint, const char *ke
         snprintf(buffer, sizeof(buffer), "JSON deserialization failed: %s (%d)", error.c_str(), error.code());
         return ZaloBotESPResponse(ZaloBotESPResponseCode::JsonDeserializationFailed, String(buffer));
     }
-    BC_DEBUG("Response code: %d\n", httpResponseCode);
 #if defined(DEBUG_BOTCLIENT)
+    BC_DEBUG("Response code: %d\n", httpResponseCode);
     serializeJson(responseDoc, DEBUG_BOTCLIENT);
+    BC_DEBUG("\n");
 #endif
-    if (httpResponseCode == 200 || httpResponseCode == 201)
+    if (httpResponseCode == 200 || httpResponseCode == 201 || httpResponseCode == 0)
         return ZaloBotESPResponse(responseDoc);
     if (httpResponseCode == 204)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::NoContent);
@@ -283,11 +285,12 @@ ZaloBotESPResponse ZaloBotClient::_httpGetAsyncGetResponse()
         snprintf(buffer, sizeof(buffer), "JSON deserialization failed: %s (%d)", error.c_str(), error.code());
         return ZaloBotESPResponse(ZaloBotESPResponseCode::JsonDeserializationFailed, String(buffer));
     }
-    BC_DEBUG("Response code: %d\n", httpResponseCode);
 #if defined(DEBUG_BOTCLIENT)
+    BC_DEBUG("Response code: %d\n", httpResponseCode);
     serializeJson(responseDoc, DEBUG_BOTCLIENT);
+    BC_DEBUG("\n");
 #endif
-    if (httpResponseCode == 200 || httpResponseCode == 201)
+    if (httpResponseCode == 200 || httpResponseCode == 201 || httpResponseCode == 0)
         return ZaloBotESPResponse(responseDoc);
     if (httpResponseCode == 204)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::NoContent);
@@ -316,7 +319,6 @@ ZaloBotESPResponse ZaloBotClient::GetPollingUpdates()
         _poolingInProgress = true;
         return ZaloBotESPResponse(ZaloBotESPResponseCode::PollingStarted);
     }
-    BC_DEBUG(".");
     if (_asyncHttpClient.available() <= 0)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::PollingInProgress);
     _poolingInProgress = false;
