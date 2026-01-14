@@ -1,7 +1,7 @@
 #include "ZaloBotClient.hpp"
 #include <StreamUtils.hpp>
 
-#define BASE_ZALO_BOT_API_URL "https://bot-api.zapps.me/bot"
+#define BASE_ZALO_BOT_API_URL "https://bot-api.zaloplatforms.com/bot"
 
 const char ZALOPLATFORMS_COM_CA[] PROGMEM = R"(
 -----BEGIN CERTIFICATE-----
