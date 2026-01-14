@@ -115,7 +115,10 @@ ZaloBotESPResponse ZaloBotClient::_httpPost(const char* endpoint, const char *ke
 	if (WiFi.status() != WL_CONNECTED)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     _cancelPolling();
-    char body[3072] = {0};  // message size limit is 2000 chars
+    int estimatedSize = 0;
+    for (int i = 0; i < count; ++i)
+        estimatedSize += strlen(keys[i]) + 1 + strlen(values[i]) * 3 + 1; // {key}={value (may be fully encoded)}&
+    char body[estimatedSize + 1] = {0};
     _buildFormBody(body, keys, values, count);
     char url[256];
     snprintf(url, sizeof(url), BASE_ZALO_BOT_API_URL "%s/%s", _botToken.c_str(), endpoint);
