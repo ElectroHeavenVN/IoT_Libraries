@@ -115,11 +115,10 @@ ZaloBotESPResponse ZaloBotClient::_httpPost(const char* endpoint, const char *ke
 	if (WiFi.status() != WL_CONNECTED)
         return ZaloBotESPResponse(ZaloBotESPResponseCode::WifiNotConnected);
     _cancelPolling();
-    int estimatedSize = 0;
-    for (int i = 0; i < count; ++i)
-        estimatedSize += strlen(keys[i]) + 1 + strlen(values[i]) * 3 + 1; // {key}={value (may be fully encoded)}&
+    size_t estimatedSize = 0;
+    _buildFormBody(nullptr, keys, values, count, estimatedSize);
     char body[estimatedSize + 1] = {0};
-    _buildFormBody(body, keys, values, count);
+    _buildFormBody(body, keys, values, count, estimatedSize);
     char url[256];
     snprintf(url, sizeof(url), BASE_ZALO_BOT_API_URL "%s/%s", _botToken.c_str(), endpoint);
     BC_DEBUG("POST %s -> %s\n", url, body);
@@ -211,7 +210,7 @@ void ZaloBotClient::_httpGetAsync(const char* endpoint)
     _asyncHttpClient.sendGetAsync();
 }
 
-void ZaloBotClient::_buildFormBody(char* body, const char *keys[], const char *values[], int count)
+void ZaloBotClient::_buildFormBody(char* body, const char *keys[], const char *values[], int count, size_t& bodyLength)
 {
     char buf[4];
     for (int i = 0; i < count; ++i)
@@ -220,29 +219,62 @@ void ZaloBotClient::_buildFormBody(char* body, const char *keys[], const char *v
         {
             char c = keys[i][j];
             if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
-                strncat(body, &c, 1);
+            {
+                if (body != nullptr)
+                    strncat(body, &c, 1);
+                else 
+                    bodyLength++;
+            }
             else
             {
-                snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
-                strcat(body, buf);
+                if (body != nullptr)
+                {
+                    snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
+                    strcat(body, buf);
+                }
+                else
+                    bodyLength += 3;
             }
         }
-        strcat(body, "=");
+        if (body != nullptr)
+            strcat(body, "=");
+        else
+            bodyLength++;
         for (int j = 0; j < strlen(values[i]); ++j)
         {
             char c = values[i][j];
             if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
-                strncat(body, &c, 1);
+            {
+                if (body != nullptr)
+                    strncat(body, &c, 1);
+                else
+                    bodyLength++;
+            }
             else if (c == ' ')
-                strcat(body, "+");
+            {
+                if (body != nullptr)
+                    strcat(body, "+");
+                else
+                    bodyLength++;
+            }
             else
             {
-                snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
-                strcat(body, buf);
+                if (body != nullptr)
+                {
+                    snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
+                    strcat(body, buf);
+                }
+                else
+                    bodyLength += 3;
             }
         }
-        if (i < count - 1)
-            strcat(body, "&");
+        if (i < count - 1) 
+        {
+            if (body != nullptr)
+                strcat(body, "&");
+            else
+                bodyLength++;
+        }
     }
 }
 

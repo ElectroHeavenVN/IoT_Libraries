@@ -51,7 +51,7 @@ private:
     void _httpGetAsync(const char* endpoint);
     void _cancelPolling();
     ZaloBotESPResponse _httpGetAsyncGetResponse();
-    static void _buildFormBody(char* buffer, const char *keys[], const char *values[], int count);
+    static void _buildFormBody(char* buffer, const char *keys[], const char *values[], int count, size_t& bodyLength);
     String _botToken;
     WiFiClientSecure _wifiClient;
     HTTPClientMod _httpClient;
